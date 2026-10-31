@@ -84,9 +84,15 @@ public struct ProcessListView: View {
             
             // Footer: Open Activity Monitor Shortcut
             HStack {
-                Text(settings.t("⚡ Sadece pencere açıkken taranır", "⚡ Scanned only while window is open"))
+                Text(selectedTab == 0
+                     ? settings.t("CPU: tüm çekirdeklerin toplamına oranla", "CPU: share of all cores combined")
+                     : settings.t("⚡ Sadece pencere açıkken taranır", "⚡ Scanned only while window is open"))
                     .font(.system(size: 9))
                     .foregroundColor(.secondary)
+                    .help(settings.t(
+                        "Menü çubuğundaki toplam CPU ile aynı ölçek. Etkinlik Monitörü aynı değeri çekirdek sayısıyla (\(SystemInfoHelper.coreCount)) çarpılmış gösterir.",
+                        "Same scale as the menu bar total. Activity Monitor shows the same value multiplied by the core count (\(SystemInfoHelper.coreCount))."
+                    ))
                 
                 Spacer()
                 

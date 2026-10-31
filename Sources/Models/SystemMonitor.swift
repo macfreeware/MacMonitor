@@ -318,7 +318,9 @@ public final class SystemMonitor: ObservableObject {
                         let dt = now.timeIntervalSince(prev.timestamp)
                         if dt > 0.1 && cpuTime >= prev.cpuTime {
                             let deltaNs = Double(cpuTime - prev.cpuTime) * machTicksToNs
-                            cpuPct = (deltaNs / (dt * 1_000_000_000.0)) * 100.0
+                            // Share of the whole CPU (all cores), same scale as the menu bar total;
+                            // Activity Monitor would show this multiplied by the core count
+                            cpuPct = (deltaNs / (dt * 1_000_000_000.0)) * 100.0 / Double(max(1, numCores))
                         }
                     }
                     
