@@ -85,6 +85,7 @@ public struct PopoverContentView: View {
             Picker("", selection: $settings.activeTab) {
                 Text(settings.t("Genel Bakış", "Overview")).tag(0)
                 Text(settings.t("İşlemler", "Processes")).tag(1)
+                Text(settings.t("Disk", "Disk")).tag(3)
                 Text(settings.t("Ayarlar", "Settings")).tag(2)
             }
             .pickerStyle(SegmentedPickerStyle())
@@ -104,6 +105,10 @@ public struct PopoverContentView: View {
             } else if settings.activeTab == 1 {
                 // Processes
                 ProcessListView(monitor: monitor)
+                    .padding(14)
+            } else if settings.activeTab == 3 {
+                // Disk space
+                DiskView(settings: settings)
                     .padding(14)
             } else {
                 // Settings
