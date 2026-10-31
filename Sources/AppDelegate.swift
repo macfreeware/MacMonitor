@@ -134,19 +134,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
             .store(in: &cancellables)
     }
     
+    /// Fixed width for the widest content ("100%") so the item never jumps as values change
     private func updateStatusItemLength() {
-        switch settings.menuBarStyle {
-        case .icons:
-            statusItem.length = 114.0
-        case .compact:
-            statusItem.length = 136.0
-        case .minimal:
-            statusItem.length = 76.0
-        case .cpuOnly:
-            statusItem.length = 58.0
-        case .ramOnly:
-            statusItem.length = 58.0
-        }
+        let widest = makeStatusItemAttributedTitle(cpuVal: 100, ramVal: 100, isCpuAlert: false, isRamAlert: false)
+        statusItem.length = ceil(widest.size().width) + 10
         statusItem.button?.alignment = .center
     }
     
@@ -156,15 +147,16 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
         let signature = "\(settings.menuBarStyle.rawValue)|\(Int(round(monitor.cpuInfo.totalUsage)))|\(Int(round(monitor.memoryInfo.usedPercentage)))|\(monitor.isCpuAlert && settings.showColoredAlert)|\(monitor.isRamAlert && settings.showColoredAlert)"
         guard signature != lastStatusSignature else { return }
         lastStatusSignature = signature
-        button.attributedTitle = makeStatusItemAttributedTitle()
+        button.attributedTitle = makeStatusItemAttributedTitle(
+            cpuVal: Int(round(monitor.cpuInfo.totalUsage)),
+            ramVal: Int(round(monitor.memoryInfo.usedPercentage)),
+            isCpuAlert: monitor.isCpuAlert && settings.showColoredAlert,
+            isRamAlert: monitor.isRamAlert && settings.showColoredAlert
+        )
     }
     
-    private func makeStatusItemAttributedTitle() -> NSAttributedString {
-        let cpuVal = Int(round(monitor.cpuInfo.totalUsage))
-        let ramVal = Int(round(monitor.memoryInfo.usedPercentage))
-        let isCpuAlert = monitor.isCpuAlert && settings.showColoredAlert
-        let isRamAlert = monitor.isRamAlert && settings.showColoredAlert
-        
+    private func makeStatusItemAttributedTitle(cpuVal: Int, ramVal: Int, isCpuAlert: Bool, isRamAlert: Bool) -> NSAttributedString {
+
         let font = NSFont.monospacedDigitSystemFont(ofSize: 11.5, weight: .medium)
         let normalColor = NSColor.labelColor
         let alertColor = NSColor.systemRed
@@ -178,21 +170,25 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
             return "\(val)%"
         }
         
-        let symbolConfig = NSImage.SymbolConfiguration(pointSize: 10.5, weight: .semibold)
+        let symbolConfig = NSImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
         let result = NSMutableAttributedString()
         
         func makeAttachment(systemName: String, isAlert: Bool) -> NSAttributedString {
-            if let baseImg = NSImage(systemSymbolName: systemName, accessibilityDescription: nil)?.withSymbolConfiguration(symbolConfig) {
-                let img = baseImg.copy() as! NSImage
-                img.isTemplate = true
-                let attach = NSTextAttachment()
-                attach.image = img
-                attach.bounds = CGRect(x: 0, y: -1.5, width: 13, height: 12)
-                let attr = NSMutableAttributedString(attachment: attach)
-                attr.addAttribute(.foregroundColor, value: isAlert ? alertColor : normalColor, range: NSRange(location: 0, length: attr.length))
-                return attr
+            guard let symbol = NSImage(systemSymbolName: systemName, accessibilityDescription: nil)?.withSymbolConfiguration(symbolConfig) else {
+                return NSAttributedString()
             }
-            return NSAttributedString()
+            // Natural symbol size, tinted when drawn so labelColor follows the menu bar appearance
+            let color = isAlert ? alertColor : normalColor
+            let img = NSImage(size: symbol.size, flipped: false) { rect in
+                symbol.draw(in: rect)
+                color.set()
+                rect.fill(using: .sourceAtop)
+                return true
+            }
+            let attach = NSTextAttachment()
+            attach.image = img
+            attach.bounds = CGRect(x: 0, y: ((font.capHeight - symbol.size.height) / 2).rounded(), width: symbol.size.width, height: symbol.size.height)
+            return NSAttributedString(attachment: attach)
         }
         
         switch settings.menuBarStyle {
