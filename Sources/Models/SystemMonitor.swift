@@ -300,7 +300,14 @@ public final class SystemMonitor: ObservableObject {
             let size = proc_pidinfo(pid, PROC_PIDTASKALLINFO, 0, &procInfo, Int32(MemoryLayout<proc_taskallinfo>.size))
             if size == MemoryLayout<proc_taskallinfo>.size {
                 let cpuTime = procInfo.ptinfo.pti_total_user + procInfo.ptinfo.pti_total_system
-                let memBytes = UInt64(procInfo.ptinfo.pti_resident_size)
+                // Physical footprint is what Activity Monitor shows as "Memory"; fall back to resident size
+                var usage = rusage_info_v2()
+                let hasUsage = withUnsafeMutablePointer(to: &usage) {
+                    $0.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) {
+                        proc_pid_rusage(pid, RUSAGE_INFO_V2, $0) == 0
+                    }
+                }
+                let memBytes = hasUsage ? usage.ri_phys_footprint : UInt64(procInfo.ptinfo.pti_resident_size)
                 
                 // Keep processes with at least 10MB memory or active CPU
                 if memBytes > 10 * 1024 * 1024 || cpuTime > 0 {

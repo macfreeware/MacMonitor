@@ -46,7 +46,7 @@ public struct ProcessListView: View {
                                     .lineLimit(1)
                                     .truncationMode(.middle)
                                 
-                                Text("PID: \(proc.pid)")
+                                Text(verbatim: "PID: \(proc.pid)")
                                     .font(.system(size: 9))
                                     .foregroundColor(.secondary)
                             }
