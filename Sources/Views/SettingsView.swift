@@ -22,6 +22,7 @@ public struct SettingsView: View {
                             .font(.system(size: 11, weight: .medium))
                         Spacer()
                         Picker("", selection: $settings.refreshInterval) {
+                            Text(settings.t("0,5 sn (Canlı)", "0.5s (Live)")).tag(0.5)
                             Text(settings.t("1 sn (Hızlı)", "1s (Fast)")).tag(1.0)
                             Text(settings.t("2 sn (Önerilen)", "2s (Recommended)")).tag(2.0)
                             Text(settings.t("3 sn (Hafif)", "3s (Light)")).tag(3.0)
@@ -31,8 +32,8 @@ public struct SettingsView: View {
                     }
                     
                     Text(settings.t(
-                        "💡 2 saniye aralık, arka planda ~%0.05 CPU tüketir ve sıfır sistem logu üretir.",
-                        "💡 2-second interval uses ~0.05% CPU in background and produces zero system logs."
+                        "💡 Panel kapalıyken 2 sn'de ~%0,3, 0,5 sn'de ~%0,9 CPU; sistem logu üretmez.",
+                        "💡 With the panel closed: ~0.3% CPU at 2s, ~0.9% at 0.5s; no system logs."
                     ))
                         .font(.system(size: 9.5))
                         .foregroundColor(.secondary)
@@ -63,7 +64,7 @@ public struct SettingsView: View {
             settingSection(title: settings.t("YÜKSEK KULLANIM UYARILARI", "HIGH USAGE ALERTS")) {
                 VStack(alignment: .leading, spacing: 8) {
                     Toggle(isOn: $settings.showColoredAlert) {
-                        Text(settings.t("Eşik aşıldığında renkli uyar (Turuncu/Kırmızı)", "Color alert when threshold exceeded"))
+                        Text(settings.t("Eşik aşıldığında kırmızıyla uyar", "Show in red when a threshold is exceeded"))
                             .font(.system(size: 11, weight: .medium))
                     }
                     .toggleStyle(SwitchToggleStyle())
@@ -204,7 +205,7 @@ public struct SettingsView: View {
                                 AppLogoBadgeView(size: 28, showGlow: false)
                                 
                                 VStack(alignment: .leading, spacing: 1) {
-                                    Text("MacMonitor v1.0.4")
+                                    Text("MacMonitor v\(SystemInfoHelper.appVersion)")
                                         .font(.system(size: 11, weight: .bold))
                                         .foregroundColor(.primary)
                                         .lineLimit(1)

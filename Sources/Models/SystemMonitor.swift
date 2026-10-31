@@ -55,18 +55,26 @@ public final class SystemMonitor: ObservableObject {
     private let numCores: Int
     private let hostPort = mach_host_self()
     private let pathBuffer = UnsafeMutablePointer<CChar>.allocate(capacity: Int(MAXPATHLEN))
+    // pti_total_user/system are Mach time units (24 MHz ticks on Apple Silicon), not nanoseconds
+    private let machTicksToNs: Double = {
+        var tb = mach_timebase_info_data_t()
+        mach_timebase_info(&tb)
+        return tb.denom > 0 ? Double(tb.numer) / Double(tb.denom) : 1.0
+    }()
     
     private init() {
         self.totalRAM = SystemInfoHelper.totalPhysicalMemory
         self.numCores = SystemInfoHelper.coreCount
         
         // Initial immediate fetch
+        resetHistory(interval: AppSettings.shared.refreshInterval)
         refreshMetrics()
         
         // Listen to settings changes to reschedule timer
         AppSettings.shared.$refreshInterval
             .dropFirst()
             .sink { [weak self] newInterval in
+                self?.resetHistory(interval: newInterval)
                 self?.startTimer(interval: newInterval)
             }
             .store(in: &cancellables)
@@ -109,6 +117,17 @@ public final class SystemMonitor: ObservableObject {
         self.timer = t
     }
     
+    /// Number of samples that cover the last 60 seconds at the given refresh interval
+    private static func historyLength(for interval: Double) -> Int {
+        return max(10, Int((60.0 / max(0.5, interval)).rounded()))
+    }
+    
+    private func resetHistory(interval: Double) {
+        let length = Self.historyLength(for: interval)
+        cpuInfo.history = Array(repeating: 0.0, count: length)
+        memoryInfo.history = Array(repeating: memoryInfo.usedPercentage, count: length)
+    }
+    
     public func refreshMetrics() {
         updateMemory()
         updateCPU()
@@ -135,13 +154,18 @@ public final class SystemMonitor: ObservableObject {
         guard kernReturn == KERN_SUCCESS else { return }
         
         let pageSize = UInt64(vm_kernel_page_size)
-        let active = UInt64(vmStat.active_count) * pageSize
+        // Same split as Activity Monitor: App Memory = anonymous (internal) pages minus purgeable
+        let internalPages = UInt64(vmStat.internal_page_count)
+        let purgeablePages = UInt64(vmStat.purgeable_count)
+        let active = (internalPages > purgeablePages ? internalPages - purgeablePages : 0) * pageSize
         let wired = UInt64(vmStat.wire_count) * pageSize
         let compressed = UInt64(vmStat.compressor_page_count) * pageSize
         let inactive = UInt64(vmStat.inactive_count) * pageSize
         let free = UInt64(vmStat.free_count) * pageSize
+        // File cache and everything not counted as used
+        let cached = self.totalRAM > active + wired + compressed + free ? self.totalRAM - active - wired - compressed - free : inactive
         
-        // macOS App Memory = active + wired + compressed
+        // Memory Used = App Memory + Wired + Compressed
         let used = active + wired + compressed
         
         // Swap usage via sysctl
@@ -155,7 +179,7 @@ public final class SystemMonitor: ObservableObject {
         mem.activeBytes = active
         mem.wiredBytes = wired
         mem.compressedBytes = compressed
-        mem.inactiveBytes = inactive
+        mem.inactiveBytes = cached
         mem.freeBytes = free
         
         if hasSwap {
@@ -163,9 +187,10 @@ public final class SystemMonitor: ObservableObject {
             mem.swapTotalBytes = UInt64(swap.xsu_total)
         }
         
-        // Update history (last 30 samples)
+        // Update history (last 60 seconds)
         var hist = mem.history
-        if hist.count >= 30 { hist.removeFirst() }
+        let length = Self.historyLength(for: AppSettings.shared.refreshInterval)
+        if hist.count >= length { hist.removeFirst(hist.count - length + 1) }
         hist.append(mem.usedPercentage)
         mem.history = hist
         
@@ -244,9 +269,10 @@ public final class SystemMonitor: ObservableObject {
         }
         cpu.coreUsages = perCoreUsages
         
-        // Update history (last 30 samples)
+        // Update history (last 60 seconds)
         var hist = cpu.history
-        if hist.count >= 30 { hist.removeFirst() }
+        let length = Self.historyLength(for: AppSettings.shared.refreshInterval)
+        if hist.count >= length { hist.removeFirst(hist.count - length + 1) }
         hist.append(cpu.totalUsage)
         cpu.history = hist
         
@@ -284,7 +310,7 @@ public final class SystemMonitor: ObservableObject {
                     if let prev = prevProcessSnaps[pid] {
                         let dt = now.timeIntervalSince(prev.timestamp)
                         if dt > 0.1 && cpuTime >= prev.cpuTime {
-                            let deltaNs = Double(cpuTime - prev.cpuTime)
+                            let deltaNs = Double(cpuTime - prev.cpuTime) * machTicksToNs
                             cpuPct = (deltaNs / (dt * 1_000_000_000.0)) * 100.0
                         }
                     }

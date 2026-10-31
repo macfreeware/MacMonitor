@@ -49,7 +49,7 @@ public struct MemoryInfo: Equatable {
     
     public var formattedSwap: String {
         if swapTotalBytes == 0 {
-            return "Kullanılmıyor"
+            return AppSettings.shared.t("Kullanılmıyor", "Not in use")
         }
         return "\(SystemInfoHelper.formatBytes(swapUsedBytes)) / \(SystemInfoHelper.formatBytes(swapTotalBytes))"
     }

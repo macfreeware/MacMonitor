@@ -1,6 +1,6 @@
 # ⚡ MacMonitor
 
-macOS için geliştirilmiş; **sistem loglarını asla şişirmeyen**, **aşırı düşük kaynak tüketen (idle ~%0.05 CPU, ~18 MB RAM)**, menü çubuğunda (status bar) canlı CPU ve RAM yükünü gösteren, tıklandığında modern ve detaylı bir bilgi paneli açan native Swift/SwiftUI durum çubuğu uygulaması.
+macOS için geliştirilmiş; **sistem loglarını asla şişirmeyen**, **aşırı düşük kaynak tüketen (panel kapalıyken 2 sn aralıkla ~%0,3 CPU, ~25 MB RAM)**, menü çubuğunda (status bar) canlı CPU ve RAM yükünü gösteren, tıklandığında modern ve detaylı bir bilgi paneli açan native Swift/SwiftUI durum çubuğu uygulaması.
 
 ---
 
@@ -39,18 +39,17 @@ Menü çubuğundaki göstergeye tıklandığında açılan şık, yarı saydam (
   - Canlı RAM doluluk geçmiş grafiği
 - **En Çok Kaynak Tüketen İşlemler:**
   - Sekmeler: **En Çok CPU** | **En Çok RAM**
-  - İlk 6 uygulamanın adı, PID numarası ve anlık tüketimi
+  - İlk 6 işlemin adı, PID numarası ve anlık tüketimi (yalnızca kendi kullanıcınızın işlemleri; sistem işlemleri root yetkisi gerektirir)
   - Doğrudan macOS **Etkinlik Monitörü**'nü açma kısayolu
 - **Sistem ve Donanım Bilgisi:**
   - İşlemci çipi modeli (Örn: Apple M2 / Intel Core)
   - Açık kalma süresi (Uptime)
 
 ### 4. ⚙️ Kullanıcı Konforu ve Özelleştirme (Ayarlar Sekmesi)
-- **Yenileme Sıklığı:** 1 sn (Hızlı), 2 sn (Önerilen), 3 sn (Hafif), 5 sn (Ultra Eko)
+- **Yenileme Sıklığı:** 0,5 sn (Canlı), 1 sn (Hızlı), 2 sn (Önerilen), 3 sn (Hafif), 5 sn (Ultra Eko). Ölçülen boşta yük: 2 sn ~%0,3, 1 sn ~%0,5, 0,5 sn ~%0,9 CPU (tek çekirdek).
 - **Menü Çubuğu Görünümü:** Simgeli, Kompakt, Sade, Sadece CPU, Sadece RAM
 - **Yüksek Kullanım Uyarıları:**
-  - CPU Uyarı Eşiği (%75, %80, %85, %90, %95)
-  - RAM Uyarı Eşiği (%80, %85, %90, %95)
+  - CPU ve RAM uyarı eşikleri: %20 ile %95 arası, 5'er adımla (varsayılan CPU %85, RAM %90)
   - Renkli uyarı vurgusu açma/kapama
 - **Mini Geçmiş Grafikleri:** Aç / Kapat
 - **Mac Başlangıcında Çalıştır:** Aç / Kapat (`SMAppService` entegrasyonu)
@@ -64,7 +63,8 @@ Menü çubuğundaki göstergeye tıklandığında açılan şık, yarı saydam (
 Projeyi tek bir komutla derleyip doğrudan `/Applications` (Uygulamalar) klasörünüze yükleyebilir ve başlatabilirsiniz:
 
 ```bash
-cd /Users/rafetsapanci/_AI_Projeler/MacMonitor
+git clone https://gitlab.com/freeware2/macmonitor.git
+cd macmonitor
 ./install.sh
 ```
 
@@ -108,7 +108,7 @@ MacMonitor/
 ├── Resources/
 │   ├── Info.plist                   # LSUIElement = true tanımlı plist
 │   └── AppIcon.icns                 # Özel macOS uygulama simgesi
-├── build.sh                         # Native release derleyici betiği
+├── build.sh                         # Universal (arm64 + x86_64) derleme; --zip ile dağıtım paketi
 ├── install.sh                       # Tek tıkla yükleme ve başlatma betiği
 └── Makefile                         # Standart make hedefleri (build, run, install, clean)
 ```
@@ -119,3 +119,9 @@ MacMonitor/
 - Ekstra üçüncü parti kütüphane ya da internet bağımlılığı içermez.
 - `root` (sudo) yetkisi gerektirmez.
 - Gizliliğinizi korur; dışarıya hiçbir veri göndermez.
+
+## 📄 Lisans
+
+Copyright © 2026 Rafet SAPANCI
+
+MacMonitor özgür yazılımdır: [GNU Genel Kamu Lisansı](LICENSE) sürüm 3 ya da (tercihinize göre) sonraki bir sürümün koşullarıyla kullanabilir, değiştirebilir ve dağıtabilirsiniz (GPL-3.0-or-later). Program **hiçbir garanti olmadan** sunulur.

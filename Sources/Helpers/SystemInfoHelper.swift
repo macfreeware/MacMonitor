@@ -3,6 +3,9 @@ import Darwin
 
 public enum SystemInfoHelper {
     
+    /// App version from Info.plist (set in build.sh)
+    public static let appVersion: String = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+    
     /// Returns the CPU brand string (e.g. "Apple M2", "Intel Core i7")
     public static var cpuBrand: String = {
         var size: Int = 0

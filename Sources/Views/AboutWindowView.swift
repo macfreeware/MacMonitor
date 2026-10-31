@@ -105,7 +105,7 @@ public struct AboutWindowView: View {
                         Text("MacMonitor")
                             .font(.system(size: 21, weight: .bold, design: .rounded))
                         
-                        Text("v1.0.4")
+                        Text("v\(SystemInfoHelper.appVersion)")
                             .font(.system(size: 10.5, weight: .bold, design: .monospaced))
                             .foregroundColor(.cyan)
                             .padding(.horizontal, 8)

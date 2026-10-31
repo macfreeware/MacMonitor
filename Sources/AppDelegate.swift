@@ -11,6 +11,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
     private var globalEventMonitor: Any?
     private var localEventMonitor: Any?
     private var popoverOpenTime = Date.distantPast
+    private var lastStatusSignature = ""
     
     private let monitor = SystemMonitor.shared
     private let settings = AppSettings.shared
@@ -29,13 +30,16 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
         popover.behavior = .transient
         popover.animates = false
         popover.delegate = self
-        
+    }
+    
+    /// The SwiftUI content exists only while the popover is shown; otherwise every metric
+    /// update would re-render the hidden view tree and cost CPU in the background.
+    private func attachPopoverContent() {
+        guard popover.contentViewController == nil else { return }
         let contentView = PopoverContentView(monitor: monitor, settings: settings) { [weak self] measuredHeight in
             self?.applyPopoverHeight(measuredHeight)
         }
-        let hc = NSHostingController(rootView: contentView)
-        popover.contentViewController = hc
-        measureAndUpdatePopoverHeight()
+        popover.contentViewController = NSHostingController(rootView: contentView)
     }
     
     private func measureAndUpdatePopoverHeight() {
@@ -148,6 +152,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
     
     private func updateButtonDisplay() {
         guard let button = statusItem.button else { return }
+        // Several publishers fire per refresh; redraw only when what is shown actually changes
+        let signature = "\(settings.menuBarStyle.rawValue)|\(Int(round(monitor.cpuInfo.totalUsage)))|\(Int(round(monitor.memoryInfo.usedPercentage)))|\(monitor.isCpuAlert && settings.showColoredAlert)|\(monitor.isRamAlert && settings.showColoredAlert)"
+        guard signature != lastStatusSignature else { return }
+        lastStatusSignature = signature
         button.attributedTitle = makeStatusItemAttributedTitle()
     }
     
@@ -248,6 +256,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
         if popover.isShown {
             closePopover()
         } else {
+            settings.refreshLaunchAtLoginStatus()
+            attachPopoverContent()
             measureAndUpdatePopoverHeight()
             popoverOpenTime = Date()
             
@@ -432,6 +442,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
         Task { @MainActor in
             self.monitor.isPopoverOpen = false
             self.stopEventMonitors()
+            self.popover.contentViewController = nil
         }
     }
 }

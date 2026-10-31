@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import ServiceManagement
 
 public enum AppLanguage: String, CaseIterable, Identifiable {
     case system = "system"
@@ -108,11 +109,28 @@ public final class AppSettings: ObservableObject {
         }
     }
     
+    /// Shows the real login item registration (SMAppService), not a stored preference.
     @Published public var launchAtLogin: Bool {
         didSet {
+            guard !isSyncingLaunchAtLogin else { return }
             defaults.set(launchAtLogin, forKey: "launchAtLogin")
             LaunchAtLoginHelper.isEnabled = launchAtLogin
+            // Turned off by the user in System Settings: approval has to be given there
+            if launchAtLogin && SMAppService.mainApp.status == .requiresApproval {
+                SMAppService.openSystemSettingsLoginItems()
+            }
+            refreshLaunchAtLoginStatus()
         }
+    }
+    private var isSyncingLaunchAtLogin = false
+    
+    /// Syncs the toggle with macOS (e.g. after a change in System Settings or a failed registration).
+    public func refreshLaunchAtLoginStatus() {
+        let enabled = LaunchAtLoginHelper.isEnabled
+        guard launchAtLogin != enabled else { return }
+        isSyncingLaunchAtLogin = true
+        launchAtLogin = enabled
+        isSyncingLaunchAtLogin = false
     }
     
     @Published public var activeTab: Int = 0
@@ -158,6 +176,15 @@ public final class AppSettings: ObservableObject {
             self.showSparkline = true
         }
         
+        // On by default, applied once; not from a translocated (quarantined, unmoved) copy
+        let isTranslocated = Bundle.main.bundlePath.contains("/AppTranslocation/")
+        let userTurnedOff = defaults.object(forKey: "launchAtLogin") != nil && !defaults.bool(forKey: "launchAtLogin")
+        if !isTranslocated && !defaults.bool(forKey: "launchAtLoginDefaultApplied") {
+            defaults.set(true, forKey: "launchAtLoginDefaultApplied")
+            if !userTurnedOff {
+                LaunchAtLoginHelper.isEnabled = true
+            }
+        }
         self.launchAtLogin = LaunchAtLoginHelper.isEnabled
     }
 }
