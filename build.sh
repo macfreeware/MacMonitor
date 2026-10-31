@@ -5,8 +5,8 @@ set -e
 cd "$(dirname "$0")"
 
 APP_NAME="MacMonitor"
-VERSION="1.0.4"
-BUILD_NUMBER="4"
+VERSION="1.1.0"
+BUILD_NUMBER="5"
 BUILD_DIR="build"
 APP_BUNDLE="${BUILD_DIR}/${APP_NAME}.app"
 CONTENTS_DIR="${APP_BUNDLE}/Contents"

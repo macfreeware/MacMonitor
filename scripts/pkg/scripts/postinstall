@@ -1,0 +1,31 @@
+#!/bin/bash
+# MacMonitor kurulum sonrası: uygulamayı giriş yapmış kullanıcı olarak aç. İlk açılışta menü çubuğunda
+# belirir ve "Mac açılışında otomatik başlat" ayarını kaydeder.
+# En iyi çaba: bir adım başarısız olsa da kurulum başarısız sayılmaz (her zaman 0 ile çıkar).
+
+APP="/Applications/MacMonitor.app"
+LOG="/tmp/MacMonitor-kurulum.log"
+log() { echo "[$(/bin/date '+%F %T')] $*" >> "$LOG"; }
+
+CONSOLE_USER="$(/usr/bin/stat -f%Su /dev/console 2>/dev/null)"
+log "Kurulum sonrası başladı (konsol kullanıcısı: '${CONSOLE_USER}')"
+
+if [ ! -d "$APP" ]; then
+  log "HATA: $APP bulunamadı"
+  exit 0
+fi
+
+# Giriş yapmış bir kullanıcı yoksa (uzaktan/otomatik kurulum) uygulama açılmaz; kullanıcı ilk açtığında ayarlar uygulanır.
+if [ -z "$CONSOLE_USER" ] || [ "$CONSOLE_USER" = "root" ] || [ "$CONSOLE_USER" = "loginwindow" ]; then
+  log "Giriş yapmış kullanıcı yok; uygulama açılmadı"
+  exit 0
+fi
+
+USER_ID="$(/usr/bin/id -u "$CONSOLE_USER")"
+if [ "$(/usr/bin/id -u)" = "0" ]; then
+  /bin/launchctl asuser "$USER_ID" /usr/bin/sudo -u "$CONSOLE_USER" /usr/bin/open -a "$APP" >> "$LOG" 2>&1
+else
+  /usr/bin/open -a "$APP" >> "$LOG" 2>&1
+fi
+log "MacMonitor açıldı (çıkış kodu $?)"
+exit 0

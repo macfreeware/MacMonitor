@@ -1,6 +1,6 @@
 # ⚡ MacMonitor
 
-macOS için geliştirilmiş; **sistem loglarını asla şişirmeyen**, **aşırı düşük kaynak tüketen (panel kapalıyken 2 sn aralıkla ~%0,3 CPU, ~25 MB RAM)**, menü çubuğunda (status bar) canlı CPU ve RAM yükünü gösteren, tıklandığında modern ve detaylı bir bilgi paneli açan native Swift/SwiftUI durum çubuğu uygulaması.
+macOS için geliştirilmiş; **sistem loglarını asla şişirmeyen**, **aşırı düşük kaynak tüketen (panel kapalıyken 2 sn aralıkla ~%0,3 CPU, ~40 MB RAM)**, menü çubuğunda (status bar) canlı CPU ve RAM yükünü gösteren, disk boşluğunu da izleyen, tıklandığında modern ve detaylı bir bilgi paneli açan native Swift/SwiftUI durum çubuğu uygulaması.
 
 ---
 
@@ -41,6 +41,11 @@ Menü çubuğundaki göstergeye tıklandığında açılan şık, yarı saydam (
   - Sekmeler: **En Çok CPU** | **En Çok RAM**
   - İlk 6 işlemin adı, PID numarası ve anlık tüketimi (yalnızca kendi kullanıcınızın işlemleri; sistem işlemleri root yetkisi gerektirir)
   - Doğrudan macOS **Etkinlik Monitörü**'nü açma kısayolu
+- **Disk Boşluğu (Disk sekmesi):**
+  - Bağlı her disk (başlangıç diski, harici diskler, USB bellekler) için boş, kullanılan ve toplam alan
+  - Doluluğa göre renklenen çubuk (%75'e kadar yeşil, %90'a kadar turuncu, üstü kırmızı)
+  - Değerler Finder ile aynı hesaplanır (ondalık GB, silinebilir alan dahil); karta çift tıklayınca disk Finder'da açılır
+  - Yalnızca sekme açıkken 5 saniyede bir okunur
 - **Sistem ve Donanım Bilgisi:**
   - İşlemci çipi modeli (Örn: Apple M2 / Intel Core)
   - Açık kalma süresi (Uptime)
@@ -58,7 +63,19 @@ Menü çubuğundaki göstergeye tıklandığında açılan şık, yarı saydam (
 
 ---
 
-## 🛠️ Kurulum ve Çalıştırma
+## 📥 İndir ve Kur
+
+macOS 13 veya üstü gerekir. Apple Silicon ve Intel Mac'lerde çalışır (universal).
+
+[![MacMonitor'ı indir](docs/download-button-tr.png)](https://gitlab.com/freeware2/macmonitor/-/releases/permalink/latest/downloads/MacMonitor.pkg)
+
+1. [Son sürümün](https://gitlab.com/freeware2/macmonitor/-/releases) `MacMonitor-<sürüm>.pkg` dosyasını indirip çift tıklayın.
+2. Paket Apple onayından geçmediği için macOS ilk açılışta engeller: uyarıyı **Bitti** ile kapatın, sonra **Sistem Ayarları → Gizlilik ve Güvenlik**'te **Yine de Aç**'a tıklayın.
+3. Kurulum adımlarını tamamlayın. MacMonitor menü çubuğunda açılır.
+
+Kurulum paketi istemezseniz `MacMonitor-<sürüm>.zip` dosyasını indirip `MacMonitor.app`'i **Uygulamalar** klasörüne sürükleyin.
+
+## 🛠️ Kaynaktan Derleme
 
 Projeyi tek bir komutla derleyip doğrudan `/Applications` (Uygulamalar) klasörünüze yükleyebilir ve başlatabilirsiniz:
 
@@ -94,12 +111,14 @@ MacMonitor/
 │   │   ├── CPUInfo.swift            # Çekirdek ve CPU veri modeli
 │   │   ├── MemoryInfo.swift         # RAM ve Swap veri modeli
 │   │   ├── ProcessInfo.swift        # Süreç listeleme modeli
+│   │   ├── DiskInfo.swift           # Bağlı disklerin boş/toplam alanı
 │   │   └── AppSettings.swift        # UserDefaults destekli kullanıcı ayarları
 │   ├── Views/
 │   │   ├── PopoverContentView.swift # Ana detay penceresi ve sekme yöneticisi
 │   │   ├── CPUDetailView.swift      # CPU göstergesi, çekirdek çubukları ve grafik
 │   │   ├── MemoryDetailView.swift   # RAM dağılımı, segment barı ve swap
 │   │   ├── ProcessListView.swift    # Top CPU / Top RAM süreç listesi
+│   │   ├── DiskView.swift           # Disk sekmesi
 │   │   ├── SettingsView.swift       # Kullanıcı ayar paneli
 │   │   └── SparklineView.swift      # Donanım ivmeli mini trend grafiği
 │   └── Helpers/
@@ -109,6 +128,7 @@ MacMonitor/
 │   ├── Info.plist                   # LSUIElement = true tanımlı plist
 │   └── AppIcon.icns                 # Özel macOS uygulama simgesi
 ├── build.sh                         # Universal (arm64 + x86_64) derleme; --zip ile dağıtım paketi
+├── scripts/build_pkg.sh             # Kurulum paketi (.pkg) üretimi
 ├── install.sh                       # Tek tıkla yükleme ve başlatma betiği
 └── Makefile                         # Standart make hedefleri (build, run, install, clean)
 ```
@@ -118,7 +138,7 @@ MacMonitor/
 ## 🔒 İzinler ve Güvenlik
 - Ekstra üçüncü parti kütüphane ya da internet bağımlılığı içermez.
 - `root` (sudo) yetkisi gerektirmez.
-- Gizliliğinizi korur; dışarıya hiçbir veri göndermez.
+- Gizliliğinizi korur; dışarıya hiçbir veri göndermez (ağ erişimi yoktur).
 
 ## 📄 Lisans
 
