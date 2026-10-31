@@ -34,18 +34,18 @@
 
 The readout in light and dark menu bars (red once a threshold is crossed), and the panel that opens with a click.
 
-<p align="center"><img src="docs/screenshots/menubar.png" width="380" alt="Menu bar: CPU 7% and RAM 64% in a light menu bar, CPU 23% and RAM 92% in red in a dark menu bar"></p>
+<p align="center"><img src="docs/screenshots/menubar.png" width="436" alt="Menu bar: CPU 7% and RAM 64% in a light menu bar, CPU 23% and RAM 92% in red in a dark menu bar"></p>
 
 <p align="center">
-  <img src="docs/screenshots/overview.png" width="300" alt="Overview tab: total CPU with user, system and idle, a bar per core, CPU history, and memory breakdown with swap">
+  <img src="docs/screenshots/overview.png" width="330" alt="Overview tab: total CPU with user, system and idle, a bar per core, CPU history, and memory breakdown with swap">
   &nbsp;
-  <img src="docs/screenshots/overview-dark.png" width="300" alt="Overview tab in dark mode">
+  <img src="docs/screenshots/overview-dark.png" width="330" alt="Overview tab in dark mode">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/processes.png" width="300" alt="Processes tab: the six processes using the most CPU">
+  <img src="docs/screenshots/processes.png" width="330" alt="Processes tab: the six processes using the most CPU">
   &nbsp;
-  <img src="docs/screenshots/disk.png" width="300" alt="Disk tab: free, used and total space of Macintosh HD">
+  <img src="docs/screenshots/disk.png" width="330" alt="Disk tab: free, used and total space of Macintosh HD">
 </p>
 
 ## Features

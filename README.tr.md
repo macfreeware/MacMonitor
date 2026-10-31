@@ -34,18 +34,18 @@
 
 Açık ve koyu menü çubuğunda gösterge (eşik aşılınca kırmızı) ve tıklayınca açılan panel.
 
-<p align="center"><img src="docs/screenshots/menubar.png" width="380" alt="Menü çubuğu: açık menü çubuğunda CPU %7 ve RAM %64, koyu menü çubuğunda CPU %23 ve kırmızı RAM %92"></p>
+<p align="center"><img src="docs/screenshots/menubar.png" width="436" alt="Menü çubuğu: açık menü çubuğunda CPU %7 ve RAM %64, koyu menü çubuğunda CPU %23 ve kırmızı RAM %92"></p>
 
 <p align="center">
-  <img src="docs/screenshots/tr/overview.png" width="300" alt="Genel Bakış sekmesi: kullanıcı, sistem ve boşta ayrımıyla toplam CPU, her çekirdek için çubuk, CPU geçmişi, takas alanıyla birlikte bellek dağılımı">
+  <img src="docs/screenshots/tr/overview.png" width="330" alt="Genel Bakış sekmesi: kullanıcı, sistem ve boşta ayrımıyla toplam CPU, her çekirdek için çubuk, CPU geçmişi, takas alanıyla birlikte bellek dağılımı">
   &nbsp;
-  <img src="docs/screenshots/tr/overview-dark.png" width="300" alt="Genel Bakış sekmesi, koyu görünüm">
+  <img src="docs/screenshots/tr/overview-dark.png" width="330" alt="Genel Bakış sekmesi, koyu görünüm">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/tr/processes.png" width="300" alt="İşlemler sekmesi: en çok CPU kullanan altı işlem">
+  <img src="docs/screenshots/tr/processes.png" width="330" alt="İşlemler sekmesi: en çok CPU kullanan altı işlem">
   &nbsp;
-  <img src="docs/screenshots/tr/disk.png" width="300" alt="Disk sekmesi: Macintosh HD'nin boş, kullanılan ve toplam alanı">
+  <img src="docs/screenshots/tr/disk.png" width="330" alt="Disk sekmesi: Macintosh HD'nin boş, kullanılan ve toplam alanı">
 </p>
 
 ## Özellikler
