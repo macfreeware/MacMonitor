@@ -82,13 +82,14 @@ public struct PopoverContentView: View {
             .padding(.bottom, 10)
             
             // Tab Switcher
-            Picker("", selection: $settings.activeTab) {
-                Text(settings.t("Genel Bakış", "Overview")).tag(0)
-                Text(settings.t("İşlemler", "Processes")).tag(1)
-                Text(settings.t("Disk", "Disk")).tag(3)
-                Text(settings.t("Ayarlar", "Settings")).tag(2)
-            }
-            .pickerStyle(SegmentedPickerStyle())
+            // A segmented Picker sizes every segment to the widest label and, with four tabs,
+            // grows past the popover width; this bar always splits the available width evenly
+            PopoverTabBar(selection: $settings.activeTab, tabs: [
+                (0, settings.t("Genel Bakış", "Overview")),
+                (1, settings.t("İşlemler", "Processes")),
+                (3, settings.t("Disk", "Disk")),
+                (2, settings.t("Ayarlar", "Settings")),
+            ])
             .padding(.horizontal, 14)
             .padding(.bottom, 10)
             
@@ -152,6 +153,38 @@ public struct PopoverContentView: View {
                 Label(settings.t("Etkinlik Monitörünü Aç...", "Open Activity Monitor..."), systemImage: "waveform.path.ecg.rectangle")
             }
         }
+    }
+}
+
+private struct PopoverTabBar: View {
+    @Binding var selection: Int
+    let tabs: [(tag: Int, title: String)]
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(tabs, id: \.tag) { tab in
+                let isSelected = selection == tab.tag
+                Text(tab.title)
+                    .font(.system(size: 11.5, weight: isSelected ? .semibold : .regular))
+                    .foregroundColor(isSelected ? .primary : .secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(isSelected ? Color(NSColor.controlBackgroundColor) : Color.clear)
+                            .shadow(color: .black.opacity(isSelected ? 0.15 : 0), radius: 1, y: 0.5)
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture { selection = tab.tag }
+            }
+        }
+        .padding(2)
+        .background(
+            RoundedRectangle(cornerRadius: 7)
+                .fill(Color.primary.opacity(0.07))
+        )
     }
 }
 
