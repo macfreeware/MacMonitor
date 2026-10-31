@@ -4,6 +4,25 @@ macOS için geliştirilmiş; **sistem loglarını asla şişirmeyen**, **aşır�
 
 ---
 
+## 📸 Ekran Görüntüleri
+
+**Menü çubuğu:** açık ve koyu menü çubuğuna uyum sağlar; eşik aşılınca değer kırmızıya döner.
+
+<img src="docs/screenshots/menubar.png" width="380" alt="Menü çubuğunda MacMonitor göstergesi, açık ve koyu görünüm">
+
+<table>
+<tr>
+<td align="center" valign="top"><img src="docs/screenshots/overview.png" width="300" alt="Genel Bakış sekmesi"><br><sub>Genel Bakış: CPU, çekirdekler ve bellek</sub></td>
+<td align="center" valign="top"><img src="docs/screenshots/overview-dark.png" width="300" alt="Genel Bakış sekmesi, koyu görünüm"><br><sub>Koyu görünüm</sub></td>
+</tr>
+<tr>
+<td align="center" valign="top"><img src="docs/screenshots/processes.png" width="300" alt="İşlemler sekmesi"><br><sub>İşlemler: en çok CPU / RAM kullananlar</sub></td>
+<td align="center" valign="top"><img src="docs/screenshots/disk.png" width="300" alt="Disk sekmesi"><br><sub>Disk: boş ve kullanılan alan</sub></td>
+</tr>
+</table>
+
+---
+
 ## 🌟 Öne Çıkan Özellikler
 
 ### 1. 🚀 Sıfır Sistem Logu ve Ultra Düşük Kaynak Tüketimi
