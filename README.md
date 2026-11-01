@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://gitlab.com/freeware2/macmonitor/-/releases">All releases</a> · <a href="#download-and-install">Installation steps</a> · The interface is in English and Turkish
+  <a href="https://macfreeware.github.io/macmonitor/">Website</a> · <a href="https://gitlab.com/freeware2/macmonitor/-/releases">All releases</a> · <a href="#download-and-install">Installation steps</a> · The interface is in English and Turkish
 </p>
 
 > [!warning] The first time you open the installer, macOS blocks it. This is expected.
