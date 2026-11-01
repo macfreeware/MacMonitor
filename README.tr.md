@@ -5,8 +5,12 @@
 <h1 align="center">MacMonitor</h1>
 
 <p align="center">
-  macOS için yerel bir <b>menü çubuğu izleyicisi</b>: menü çubuğunda canlı <b>CPU</b> ve <b>RAM</b> kullanımı; tek tıkla çekirdek yükleri, bellek dağılımı, en çok kaynak kullanan işlemler ve disk boşluğu.<br>
+  macOS için ücretsiz ve açık kaynak bir <b>menü çubuğu izleyicisi</b>: menü çubuğunda canlı <b>CPU</b> ve <b>RAM</b> kullanımı; tek tıkla çekirdek yükleri, bellek dağılımı, en çok kaynak kullanan işlemler ve disk boşluğu.<br>
   Swift, AppKit ve SwiftUI ile yazılmıştır; Electron ya da üçüncü taraf kütüphane gerektirmez.
+</p>
+
+<p align="center">
+  Yalnızca CPU, bellek ve diske bir bakışta göz atmak istiyorsanız <b>iStat Menus</b>, <b>Stats</b> ve <b>MenuMeters</b>'a hafif ve ücretsiz bir alternatif.
 </p>
 
 <p align="center">
@@ -142,6 +146,38 @@ Xcode komut satırı araçları gerekir (macOS 13 veya üstü).
 scripts/build_pkg.sh    # kurulum paketi: build/release/MacMonitor-<sürüm>.pkg ve SHA-256 değeri
 ./install.sh            # derler, Uygulamalar'a kopyalar ve başlatır
 ```
+
+## Sık sorulan sorular
+
+### MacMonitor ücretsiz mi?
+
+Evet. MacMonitor, GPL-3.0 lisansıyla ücretsiz ve açık kaynaktır. Reklam, hesap ya da uygulama içi satın alma yoktur ve internete hiç bağlanmaz.
+
+### Mac'te menü çubuğunda CPU ve RAM kullanımını nasıl görürüm?
+
+MacMonitor'ı kurun: CPU ve RAM yüzdeleri hemen menü çubuğunda belirir ve 0,5 ile 5 saniye arasında yenilenir. Tıklayınca çekirdek yükleri, bellek dağılımı ve en çok CPU ya da bellek kullanan işlemler açılır.
+
+### Mac'imde ne kadar boş disk alanı kaldığını nasıl görürüm?
+
+Menü çubuğunda MacMonitor'a tıklayıp **Disk** sekmesini açın. Başlangıç diskinin ve bağlı her harici diskin boş, kullanılan ve toplam alanını Finder ile aynı hesapla gösterir.
+
+### Mac'imi yavaşlatır mı?
+
+Hayır. Panel kapalıyken toplam CPU'nun yaklaşık %0,1'ini ve 40 MB bellek kullanır. `top` ya da `ps` gibi kabuk komutları çalıştırmadığı için sistem loguna bir şey eklemez.
+
+### iStat Menus ya da Stats'tan farkı ne?
+
+MacMonitor bilerek daha az şey yapar: CPU, bellek, disk alanı ve en çok kaynak kullanan işlemler. Sensör, ağ, pil ya da GPU grafikleri yoktur. Yalnızca bu temel bilgileri istiyorsanız küçük ve sessiz kalır.
+
+### Hangi Mac'lerde çalışır?
+
+macOS 13 Ventura veya üstü yüklü Apple Silicon ve Intel Mac'lerde.
+
+### macOS neden ilk seferde engelliyor?
+
+MacMonitor, ücretli geliştirici hesabı gerektiren Apple onayından (notarization) geçmemiştir. **Sistem Ayarları ▸ Gizlilik ve Güvenlik ▸ Yine de Aç** ile bir kez izin verin; ayrıntılar [İlk açılış](#i̇lk-açılış-kurulum-paketine-bir-kez-izin-verin) bölümünde.
+
+<sub>iStat Menus, Stats ve MenuMeters yalnızca karşılaştırma için anılmıştır; MacMonitor'ın bunlarla bir bağı yoktur.</sub>
 
 ## Lisans
 

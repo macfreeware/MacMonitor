@@ -5,8 +5,12 @@
 <h1 align="center">MacMonitor</h1>
 
 <p align="center">
-  A native <b>menu bar monitor</b> for macOS: live <b>CPU</b> and <b>RAM</b> usage in the menu bar, with per-core load, memory breakdown, top processes and free disk space one click away.<br>
+  A free, open-source <b>menu bar monitor</b> for macOS: live <b>CPU</b> and <b>RAM</b> usage in the menu bar, with per-core load, memory breakdown, top processes and free disk space one click away.<br>
   Written in Swift with AppKit and SwiftUI; no Electron and no third-party libraries.
+</p>
+
+<p align="center">
+  A lightweight, free alternative to <b>iStat Menus</b>, <b>Stats</b> and <b>MenuMeters</b> when you only need CPU, memory and disk at a glance.
 </p>
 
 <p align="center">
@@ -142,6 +146,38 @@ Requires the Xcode command line tools (macOS 13 or later).
 scripts/build_pkg.sh    # installer: build/release/MacMonitor-<version>.pkg and its SHA-256
 ./install.sh            # builds, copies to Applications and starts it
 ```
+
+## FAQ
+
+### Is MacMonitor free?
+
+Yes. MacMonitor is free and open source under the GPL-3.0 license. There are no ads, no accounts and no in-app purchases, and it never connects to the internet.
+
+### How do I see CPU and RAM usage in the Mac menu bar?
+
+Install MacMonitor: CPU and RAM percentages appear in the menu bar right away and refresh every 0.5 to 5 seconds. Click them for per-core load, the memory breakdown and the processes using the most CPU or memory.
+
+### How do I check free disk space on my Mac?
+
+Click MacMonitor in the menu bar and open the **Disk** tab. It shows free, used and total space for the startup disk and every external drive, calculated the same way as Finder.
+
+### Will it slow down my Mac?
+
+No. With the panel closed MacMonitor uses about 0.1% of total CPU and 40 MB of memory. It doesn't run shell commands such as `top` or `ps`, so it adds nothing to the system log.
+
+### How is it different from iStat Menus or Stats?
+
+MacMonitor does less on purpose: CPU, memory, disk space and the top processes. It has no sensor, network, battery or GPU graphs. If those essentials are all you want, it stays small and quiet.
+
+### Which Macs does it run on?
+
+Apple Silicon and Intel Macs with macOS 13 Ventura or later.
+
+### Why does macOS block it the first time?
+
+MacMonitor is not notarized by Apple, which needs a paid developer account. Allow it once in **System Settings ▸ Privacy & Security ▸ Open Anyway**; see [First launch](#first-launch-allow-the-installer-once).
+
+<sub>iStat Menus, Stats and MenuMeters are named only for comparison; MacMonitor is not affiliated with them.</sub>
 
 ## License
 
