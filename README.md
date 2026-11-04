@@ -5,12 +5,12 @@
 <h1 align="center">MacMonitor</h1>
 
 <p align="center">
-  A free, open-source <b>menu bar monitor</b> for macOS: live <b>CPU</b> and <b>RAM</b> usage in the menu bar, with per-core load, memory breakdown, top processes and free disk space one click away.<br>
+  A free, open-source <b>menu bar monitor</b> for macOS: live <b>CPU</b> and <b>RAM</b> usage in the menu bar, with per-core load, memory breakdown, top processes, free disk space and battery health and history one click away.<br>
   Written in Swift with AppKit and SwiftUI; no Electron and no third-party libraries.
 </p>
 
 <p align="center">
-  A lightweight, free alternative to <b>iStat Menus</b>, <b>Stats</b> and <b>MenuMeters</b> when you only need CPU, memory and disk at a glance.
+  A lightweight, free alternative to <b>iStat Menus</b>, <b>Stats</b> and <b>MenuMeters</b> when you only need CPU, memory, disk and battery at a glance.
 </p>
 
 <p align="center">
@@ -52,6 +52,10 @@ The readout in light and dark menu bars (red once a threshold is crossed), and t
   <img src="docs/screenshots/disk.png" width="330" alt="Disk tab: free, used and total space of Macintosh HD">
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/battery.png" width="330" alt="Battery tab: charge, battery history chart with charging periods and system power, health and cycle count">
+</p>
+
 ## Features
 
 ### Menu bar
@@ -80,11 +84,21 @@ The readout in light and dark menu bars (red once a threshold is crossed), and t
 - Sizes as Finder shows them (decimal GB, purgeable space counted as free). The bar turns orange above 75% and red above 90%.
 - Double-click a volume to open it in Finder.
 
+### Battery
+
+Shown only on Macs with a battery.
+
+- **Charge and state:** charging, on battery, fully charged or held by macOS (optimized charging), with the adapter in use.
+- **Time remaining** until empty or full, as macOS estimates it.
+- **Power:** what the whole Mac draws right now, in watts, and the power going into or out of the battery.
+- **Health and cycles:** maximum capacity (the same figure as System Settings) and cycle count against the battery's design cycles.
+- **Battery history:** a chart of the charge level, with charging periods and system power below it, over 24 hours, 7 days, 30 days or everything recorded, with values under the pointer and a summary (time on battery, lowest level, average power). MacMonitor records once a minute, also with the panel closed, and keeps 90 days; macOS itself shows only the last 24 hours.
+
 ### Light on resources
 
 - About **0.1% of total CPU and 40 MB of memory** with the panel closed.
 - Reads everything through Darwin and Mach APIs (`host_statistics64`, `host_processor_info`, `proc_pidinfo`, `sysctl`): no `top` or `ps` shell commands, so nothing fills up the system log.
-- Processes are scanned only while the panel is open, and disks are read only while the Disk tab is open.
+- Processes are scanned only while the panel is open, and disks are read only while the Disk tab is open. The battery history takes one reading a minute and writes to disk every 10 minutes.
 
 ### Settings
 
@@ -134,7 +148,7 @@ Right-click the menu bar readout, choose **Quit MacMonitor**, then move MacMonit
 
 ## Privacy
 
-MacMonitor has no network access and sends no data anywhere. It needs no administrator rights and no extra permissions.
+MacMonitor has no network access and sends no data anywhere. It needs no administrator rights and no extra permissions. The battery history (charge level, charging state and system power, 8 bytes a minute) stays on your Mac in `~/Library/Application Support/MacMonitor/battery-history.bin`; delete that file to clear it.
 
 ## Building from source
 
@@ -161,13 +175,21 @@ Install MacMonitor: CPU and RAM percentages appear in the menu bar right away an
 
 Click MacMonitor in the menu bar and open the **Disk** tab. It shows free, used and total space for the startup disk and every external drive, calculated the same way as Finder.
 
+### How do I check my Mac's battery health and charge history?
+
+Open MacMonitor's **Battery** tab. It shows the charge, time remaining, power draw, battery health (the same "Maximum Capacity" as System Settings) and cycle count, and a chart of the charge level and system power over the last 24 hours, 7 days, 30 days or everything recorded. macOS itself only shows the last 24 hours.
+
+### Does MacMonitor keep a battery history when the panel is closed?
+
+Yes. It records the battery once a minute while it runs and keeps 90 days, about 1 MB, in `~/Library/Application Support/MacMonitor` on your Mac. Nothing is sent anywhere. The Battery tab only appears on Macs with a battery.
+
 ### Will it slow down my Mac?
 
 No. With the panel closed MacMonitor uses about 0.1% of total CPU and 40 MB of memory. It doesn't run shell commands such as `top` or `ps`, so it adds nothing to the system log.
 
 ### How is it different from iStat Menus or Stats?
 
-MacMonitor does less on purpose: CPU, memory, disk space and the top processes. It has no sensor, network, battery or GPU graphs. If those essentials are all you want, it stays small and quiet.
+MacMonitor does less on purpose: CPU, memory, disk space, the battery and the top processes. It has no sensor, network or GPU graphs. If those essentials are all you want, it stays small and quiet.
 
 ### Which Macs does it run on?
 

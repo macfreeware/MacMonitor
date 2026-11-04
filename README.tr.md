@@ -5,12 +5,12 @@
 <h1 align="center">MacMonitor</h1>
 
 <p align="center">
-  macOS için ücretsiz ve açık kaynak bir <b>menü çubuğu izleyicisi</b>: menü çubuğunda canlı <b>CPU</b> ve <b>RAM</b> kullanımı; tek tıkla çekirdek yükleri, bellek dağılımı, en çok kaynak kullanan işlemler ve disk boşluğu.<br>
+  macOS için ücretsiz ve açık kaynak bir <b>menü çubuğu izleyicisi</b>: menü çubuğunda canlı <b>CPU</b> ve <b>RAM</b> kullanımı; tek tıkla çekirdek yükleri, bellek dağılımı, en çok kaynak kullanan işlemler, disk boşluğu ve pil sağlığıyla pil geçmişi.<br>
   Swift, AppKit ve SwiftUI ile yazılmıştır; Electron ya da üçüncü taraf kütüphane gerektirmez.
 </p>
 
 <p align="center">
-  Yalnızca CPU, bellek ve diske bir bakışta göz atmak istiyorsanız <b>iStat Menus</b>, <b>Stats</b> ve <b>MenuMeters</b>'a hafif ve ücretsiz bir alternatif.
+  Yalnızca CPU, bellek, disk ve pile bir bakışta göz atmak istiyorsanız <b>iStat Menus</b>, <b>Stats</b> ve <b>MenuMeters</b>'a hafif ve ücretsiz bir alternatif.
 </p>
 
 <p align="center">
@@ -52,6 +52,10 @@ Açık ve koyu menü çubuğunda gösterge (eşik aşılınca kırmızı) ve tı
   <img src="docs/screenshots/tr/disk.png" width="330" alt="Disk sekmesi: Macintosh HD'nin boş, kullanılan ve toplam alanı">
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/tr/battery.png" width="330" alt="Pil sekmesi: şarj, şarj dönemleri ve sistem gücüyle pil geçmişi grafiği, pil sağlığı ve döngü sayısı">
+</p>
+
 ## Özellikler
 
 ### Menü çubuğu
@@ -80,11 +84,21 @@ Açık ve koyu menü çubuğunda gösterge (eşik aşılınca kırmızı) ve tı
 - Boyutlar Finder'daki gibidir (ondalık GB, silinebilir alan boş sayılır). Çubuk %75'in üstünde turuncu, %90'ın üstünde kırmızı olur.
 - Diske çift tıklayınca Finder'da açılır.
 
+### Pil
+
+Yalnızca pilli Mac'lerde görünür.
+
+- **Şarj ve durum:** şarj oluyor, pilde, tam dolu ya da macOS tarafından bekletiliyor (optimize şarj); kullanılan adaptörle birlikte.
+- macOS'un tahminiyle bitene ya da dolana kadar **kalan süre**.
+- **Güç:** Mac'in o anda toplam çektiği güç (W) ve pile giren ya da pilden çekilen güç.
+- **Sağlık ve döngü:** maksimum kapasite (Sistem Ayarları'ndaki değerle aynı) ve pilin tasarlandığı döngü sayısına karşı döngü sayısı.
+- **Pil geçmişi:** şarj düzeyinin grafiği; şarj dönemleri ve altında sistem gücüyle, 24 saat, 7 gün, 30 gün ya da kaydedilen tüm süre için. İmlecin altındaki değerleri ve bir özeti (pilde geçen süre, en düşük düzey, ortalama güç) gösterir. MacMonitor panel kapalıyken de dakikada bir kaydeder ve 90 gün tutar; macOS'un kendisi yalnızca son 24 saati gösterir.
+
 ### Kaynak dostu
 
 - Panel kapalıyken **toplam CPU'nun yaklaşık %0,1'i ve 40 MB bellek**.
 - Her şeyi Darwin ve Mach API'leriyle (`host_statistics64`, `host_processor_info`, `proc_pidinfo`, `sysctl`) okur; `top` ya da `ps` gibi kabuk komutları çalıştırmaz, bu yüzden sistem logunu doldurmaz.
-- İşlemler yalnızca panel açıkken taranır, diskler yalnızca Disk sekmesi açıkken okunur.
+- İşlemler yalnızca panel açıkken taranır, diskler yalnızca Disk sekmesi açıkken okunur. Pil geçmişi dakikada bir ölçüm alır ve 10 dakikada bir diske yazar.
 
 ### Ayarlar
 
@@ -134,7 +148,7 @@ Menü çubuğu göstergesine sağ tıklayıp **MacMonitor'dan Çık**'ı seçin,
 
 ## Gizlilik
 
-MacMonitor ağa bağlanmaz ve hiçbir yere veri göndermez. Yönetici yetkisi ya da ek izin gerektirmez.
+MacMonitor ağa bağlanmaz ve hiçbir yere veri göndermez. Yönetici yetkisi ya da ek izin gerektirmez. Pil geçmişi (şarj düzeyi, şarj durumu ve sistem gücü; dakikada 8 bayt) Mac'inizde, `~/Library/Application Support/MacMonitor/battery-history.bin` dosyasında kalır; silmek için bu dosyayı silin.
 
 ## Kaynak koddan derleme
 
@@ -161,13 +175,21 @@ MacMonitor'ı kurun: CPU ve RAM yüzdeleri hemen menü çubuğunda belirir ve 0,
 
 Menü çubuğunda MacMonitor'a tıklayıp **Disk** sekmesini açın. Başlangıç diskinin ve bağlı her harici diskin boş, kullanılan ve toplam alanını Finder ile aynı hesapla gösterir.
 
+### Mac'imin pil sağlığını ve şarj geçmişini nasıl görürüm?
+
+MacMonitor'ın **Pil** sekmesini açın. Şarj yüzdesini, kalan süreyi, güç tüketimini, pil sağlığını (Sistem Ayarları'ndaki "Maksimum Kapasite" ile aynı) ve döngü sayısını; son 24 saat, 7 gün, 30 gün ya da kaydedilen tüm süre için şarj düzeyi ve sistem gücü grafiğini gösterir. macOS'un kendisi yalnızca son 24 saati gösterir.
+
+### Panel kapalıyken de pil geçmişi kaydediliyor mu?
+
+Evet. MacMonitor çalıştığı sürece pili dakikada bir kaydeder ve 90 günü (yaklaşık 1 MB) Mac'inizde, `~/Library/Application Support/MacMonitor` içinde tutar. Hiçbir yere gönderilmez. Pil sekmesi yalnızca pilli Mac'lerde görünür.
+
 ### Mac'imi yavaşlatır mı?
 
 Hayır. Panel kapalıyken toplam CPU'nun yaklaşık %0,1'ini ve 40 MB bellek kullanır. `top` ya da `ps` gibi kabuk komutları çalıştırmadığı için sistem loguna bir şey eklemez.
 
 ### iStat Menus ya da Stats'tan farkı ne?
 
-MacMonitor bilerek daha az şey yapar: CPU, bellek, disk alanı ve en çok kaynak kullanan işlemler. Sensör, ağ, pil ya da GPU grafikleri yoktur. Yalnızca bu temel bilgileri istiyorsanız küçük ve sessiz kalır.
+MacMonitor bilerek daha az şey yapar: CPU, bellek, disk alanı, pil ve en çok kaynak kullanan işlemler. Sensör, ağ ya da GPU grafikleri yoktur. Yalnızca bu temel bilgileri istiyorsanız küçük ve sessiz kalır.
 
 ### Hangi Mac'lerde çalışır?
 
