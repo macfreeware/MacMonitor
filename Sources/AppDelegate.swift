@@ -23,6 +23,11 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
         setupPopover()
         setupStatusItem()
         observeUpdates()
+        BatteryHistory.shared.start()
+    }
+
+    public func applicationWillTerminate(_ notification: Notification) {
+        BatteryHistory.shared.flush()
     }
     
     private func setupPopover() {

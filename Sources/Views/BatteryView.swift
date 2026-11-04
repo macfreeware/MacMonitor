@@ -18,6 +18,7 @@ public struct BatteryView: View {
         VStack(alignment: .leading, spacing: 12) {
             if let b = battery {
                 chargeCard(b)
+                BatteryHistoryChart(settings: settings)
                 detailsCard(b)
             } else {
                 Text(settings.t("Pil bilgisi okunamadı.", "Could not read battery information."))
