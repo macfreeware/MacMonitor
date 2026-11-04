@@ -5,8 +5,8 @@ set -e
 cd "$(dirname "$0")"
 
 APP_NAME="MacMonitor"
-VERSION="1.1.0"
-BUILD_NUMBER="5"
+VERSION="1.2.0"
+BUILD_NUMBER="6"
 BUILD_DIR="build"
 APP_BUNDLE="${BUILD_DIR}/${APP_NAME}.app"
 CONTENTS_DIR="${APP_BUNDLE}/Contents"
@@ -29,6 +29,7 @@ for ARCH in arm64 x86_64; do
         -framework AppKit \
         -framework SwiftUI \
         -framework ServiceManagement \
+        -framework IOKit \
         ${SWIFT_FILES} \
         -o "${BUILD_DIR}/${APP_NAME}-${ARCH}"
 done

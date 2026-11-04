@@ -88,6 +88,7 @@ public struct PopoverContentView: View {
                 (0, settings.t("Genel Bakış", "Overview")),
                 (1, settings.t("İşlemler", "Processes")),
                 (3, settings.t("Disk", "Disk")),
+            ] + (BatteryInfo.isPresent ? [(4, settings.t("Pil", "Battery"))] : []) + [
                 (2, settings.t("Ayarlar", "Settings")),
             ])
             .padding(.horizontal, 14)
@@ -110,6 +111,10 @@ public struct PopoverContentView: View {
             } else if settings.activeTab == 3 {
                 // Disk space
                 DiskView(settings: settings)
+                    .padding(14)
+            } else if settings.activeTab == 4 && BatteryInfo.isPresent {
+                // Battery (only on Macs that have one)
+                BatteryView(settings: settings)
                     .padding(14)
             } else {
                 // Settings
