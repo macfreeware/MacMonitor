@@ -5,9 +5,11 @@ public struct BatteryHistoryChart: View {
     @ObservedObject var settings: AppSettings
 
     enum Range: Int, CaseIterable {
-        case day, week, month, all
+        // Raw values are stored in the settings, so new ranges get new numbers
+        case day = 0, week = 1, month = 2, all = 3, hour = 4
         var seconds: TimeInterval? {
             switch self {
+            case .hour: return 3_600
             case .day: return 86_400
             case .week: return 7 * 86_400
             case .month: return 30 * 86_400
@@ -46,11 +48,12 @@ public struct BatteryHistoryChart: View {
     public var body: some View {
         let model = prepare()
         VStack(alignment: .leading, spacing: 8) {
+            // Five ranges do not fit next to the title, so the picker gets its own row
+            Text(settings.t("Pil geçmişi", "Battery history"))
+                .font(.system(size: 11, weight: .semibold))
             HStack {
-                Text(settings.t("Pil geçmişi", "Battery history"))
-                    .font(.system(size: 11, weight: .semibold))
-                Spacer()
                 Picker("", selection: $rangeRaw) {
+                    Text(settings.t("1 sa", "1 h")).tag(Range.hour.rawValue)
                     Text(settings.t("24 sa", "24 h")).tag(Range.day.rawValue)
                     Text(settings.t("7 gün", "7 d")).tag(Range.week.rawValue)
                     Text(settings.t("30 gün", "30 d")).tag(Range.month.rawValue)
@@ -59,7 +62,6 @@ public struct BatteryHistoryChart: View {
                 .pickerStyle(.segmented)
                 .controlSize(.small)
                 .labelsHidden()
-                .fixedSize()
             }
 
             if model.points.count < 2 {
@@ -174,14 +176,27 @@ public struct BatteryHistoryChart: View {
 
     private var axisFormat: Date.FormatStyle {
         switch range {
-        case .day: return Date.FormatStyle.dateTime.hour().minute().locale(locale)
+        case .hour, .day: return Date.FormatStyle.dateTime.hour().minute().locale(locale)
         case .week: return Date.FormatStyle.dateTime.weekday(.abbreviated).locale(locale)
         case .month, .all: return Date.FormatStyle.dateTime.day().month(.abbreviated).locale(locale)
         }
     }
 
+    /// On the clock's quarter hours (:00, :15, :30, :45), not counted from the window's start
+    private func quarterHours(_ model: Model) -> [Date] {
+        let quarter: TimeInterval = 15 * 60
+        var t = (model.start.timeIntervalSinceReferenceDate / quarter).rounded(.up) * quarter
+        var dates: [Date] = []
+        while t <= model.end.timeIntervalSinceReferenceDate {
+            dates.append(Date(timeIntervalSinceReferenceDate: t))
+            t += quarter
+        }
+        return dates
+    }
+
     private var axisValues: AxisMarkValues {
         switch range {
+        case .hour: return .stride(by: .minute, count: 15)
         case .day: return .stride(by: .hour, count: 6)
         case .week: return .stride(by: .day)
         case .month: return .stride(by: .day, count: 7)
@@ -190,7 +205,7 @@ public struct BatteryHistoryChart: View {
     }
 
     private var hoverFormat: Date.FormatStyle {
-        (range == .day ? Date.FormatStyle.dateTime.hour().minute()
+        (range == .day || range == .hour ? Date.FormatStyle.dateTime.hour().minute()
                        : Date.FormatStyle.dateTime.day().month(.abbreviated).hour().minute()).locale(locale)
     }
 
@@ -247,11 +262,21 @@ public struct BatteryHistoryChart: View {
             }
         }
         .chartXAxis {
-            AxisMarks(values: axisValues) { value in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                // A label right at the edge would be cut off
-                if let d = value.as(Date.self), model.end.timeIntervalSince(d) > model.end.timeIntervalSince(model.start) * 0.1 {
-                    AxisValueLabel(format: axisFormat).font(.system(size: 8))
+            if range == .hour {
+                AxisMarks(values: quarterHours(model)) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
+                    // A label right at the edge would be cut off
+                    if let d = value.as(Date.self), model.end.timeIntervalSince(d) > model.end.timeIntervalSince(model.start) * 0.1 {
+                        AxisValueLabel(format: axisFormat).font(.system(size: 8))
+                    }
+                }
+            } else {
+                AxisMarks(values: axisValues) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
+                    // A label right at the edge would be cut off
+                    if let d = value.as(Date.self), model.end.timeIntervalSince(d) > model.end.timeIntervalSince(model.start) * 0.1 {
+                        AxisValueLabel(format: axisFormat).font(.system(size: 8))
+                    }
                 }
             }
         }

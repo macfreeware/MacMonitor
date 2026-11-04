@@ -92,7 +92,7 @@ Shown only on Macs with a battery.
 - **Time remaining** until empty or full, as macOS estimates it.
 - **Power:** what the whole Mac draws right now, in watts, and the power going into or out of the battery.
 - **Health and cycles:** maximum capacity (the same figure as System Settings) and cycle count against the battery's design cycles.
-- **Battery history:** a chart of the charge level, with charging periods and system power below it, over 24 hours, 7 days, 30 days or everything recorded, with values under the pointer and a summary (time on battery, lowest level, average power). MacMonitor records once a minute, also with the panel closed, and keeps 90 days; macOS itself shows only the last 24 hours.
+- **Battery history:** a chart of the charge level, with charging periods and system power below it, over the last hour, 24 hours, 7 days, 30 days or everything recorded, with values under the pointer and a summary (time on battery, lowest level, average power). MacMonitor records once a minute, also with the panel closed, and keeps 90 days; macOS itself shows only the last 24 hours.
 
 ### Light on resources
 
@@ -177,7 +177,7 @@ Click MacMonitor in the menu bar and open the **Disk** tab. It shows free, used 
 
 ### How do I check my Mac's battery health and charge history?
 
-Open MacMonitor's **Battery** tab. It shows the charge, time remaining, power draw, battery health (the same "Maximum Capacity" as System Settings) and cycle count, and a chart of the charge level and system power over the last 24 hours, 7 days, 30 days or everything recorded. macOS itself only shows the last 24 hours.
+Open MacMonitor's **Battery** tab. It shows the charge, time remaining, power draw, battery health (the same "Maximum Capacity" as System Settings) and cycle count, and a chart of the charge level and system power over the last hour, 24 hours, 7 days, 30 days or everything recorded. macOS itself only shows the last 24 hours.
 
 ### Does MacMonitor keep a battery history when the panel is closed?
 

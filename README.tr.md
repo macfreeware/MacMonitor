@@ -92,7 +92,7 @@ Yalnızca pilli Mac'lerde görünür.
 - macOS'un tahminiyle bitene ya da dolana kadar **kalan süre**.
 - **Güç:** Mac'in o anda toplam çektiği güç (W) ve pile giren ya da pilden çekilen güç.
 - **Sağlık ve döngü:** maksimum kapasite (Sistem Ayarları'ndaki değerle aynı) ve pilin tasarlandığı döngü sayısına karşı döngü sayısı.
-- **Pil geçmişi:** şarj düzeyinin grafiği; şarj dönemleri ve altında sistem gücüyle, 24 saat, 7 gün, 30 gün ya da kaydedilen tüm süre için. İmlecin altındaki değerleri ve bir özeti (pilde geçen süre, en düşük düzey, ortalama güç) gösterir. MacMonitor panel kapalıyken de dakikada bir kaydeder ve 90 gün tutar; macOS'un kendisi yalnızca son 24 saati gösterir.
+- **Pil geçmişi:** şarj düzeyinin grafiği; şarj dönemleri ve altında sistem gücüyle, son 1 saat, 24 saat, 7 gün, 30 gün ya da kaydedilen tüm süre için. İmlecin altındaki değerleri ve bir özeti (pilde geçen süre, en düşük düzey, ortalama güç) gösterir. MacMonitor panel kapalıyken de dakikada bir kaydeder ve 90 gün tutar; macOS'un kendisi yalnızca son 24 saati gösterir.
 
 ### Kaynak dostu
 
@@ -177,7 +177,7 @@ Menü çubuğunda MacMonitor'a tıklayıp **Disk** sekmesini açın. Başlangı�
 
 ### Mac'imin pil sağlığını ve şarj geçmişini nasıl görürüm?
 
-MacMonitor'ın **Pil** sekmesini açın. Şarj yüzdesini, kalan süreyi, güç tüketimini, pil sağlığını (Sistem Ayarları'ndaki "Maksimum Kapasite" ile aynı) ve döngü sayısını; son 24 saat, 7 gün, 30 gün ya da kaydedilen tüm süre için şarj düzeyi ve sistem gücü grafiğini gösterir. macOS'un kendisi yalnızca son 24 saati gösterir.
+MacMonitor'ın **Pil** sekmesini açın. Şarj yüzdesini, kalan süreyi, güç tüketimini, pil sağlığını (Sistem Ayarları'ndaki "Maksimum Kapasite" ile aynı) ve döngü sayısını; son 1 saat, 24 saat, 7 gün, 30 gün ya da kaydedilen tüm süre için şarj düzeyi ve sistem gücü grafiğini gösterir. macOS'un kendisi yalnızca son 24 saati gösterir.
 
 ### Panel kapalıyken de pil geçmişi kaydediliyor mu?
 
