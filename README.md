@@ -105,6 +105,7 @@ Shown only on Macs with a battery.
 - Refresh rate, menu bar style, alert thresholds and red highlighting, history graphs on or off.
 - **English, Turkish or the system language**, switched without restarting.
 - **Launch at login** through macOS `ServiceManagement` (`SMAppService`), on by default.
+- **Updates:** once a day MacMonitor checks GitLab for a new release and asks before installing it (you can turn this off). **Check for Updates…** is in the About window and the right-click menu.
 
 ## Download and install
 
@@ -115,7 +116,7 @@ The package runs on Apple Silicon and Intel Macs; macOS 13 or later is required.
 3. Click through the installer. MacMonitor is installed in **Applications**, opens by itself and its readout appears in the menu bar.
 4. From then on MacMonitor starts whenever you log in. You can turn this off in its Settings (*Launch automatically at login*).
 
-Prefer no installer? Each release also has a `MacMonitor-<version>.zip`: open it and drag `MacMonitor.app` to **Applications**.
+Prefer no installer? Each release also has a `MacMonitor.zip`: open it and drag `MacMonitor.app` to **Applications**.
 
 ### First launch: allow the installer once
 
@@ -148,7 +149,7 @@ Right-click the menu bar readout, choose **Quit MacMonitor**, then move MacMonit
 
 ## Privacy
 
-MacMonitor has no network access and sends no data anywhere. It needs no administrator rights and no extra permissions. The battery history (charge level, charging state and system power, 8 bytes a minute) stays on your Mac in `~/Library/Application Support/MacMonitor/battery-history.bin`; delete that file to clear it.
+MacMonitor sends no data anywhere. Its only network connection is the update check: once a day it asks gitlab.com for the latest release, and downloads an update only when you approve it. Turn off *Check for updates automatically* in Settings and it connects only when you press **Check for Updates…**. It needs no administrator rights and no extra permissions. The battery history (charge level, charging state and system power, 8 bytes a minute) stays on your Mac in `~/Library/Application Support/MacMonitor/battery-history.bin`; delete that file to clear it.
 
 ## Building from source
 
@@ -156,7 +157,7 @@ Requires the Xcode command line tools (macOS 13 or later).
 
 ```bash
 ./build.sh              # builds build/MacMonitor.app (universal: arm64 + x86_64)
-./build.sh --zip        # also build/release/MacMonitor-<version>.zip and its SHA-256
+./build.sh --zip        # also build/release/MacMonitor.zip and its SHA-256
 scripts/build_pkg.sh    # installer: build/release/MacMonitor-<version>.pkg and its SHA-256
 ./install.sh            # builds, copies to Applications and starts it
 ```
@@ -165,7 +166,7 @@ scripts/build_pkg.sh    # installer: build/release/MacMonitor-<version>.pkg and 
 
 ### Is MacMonitor free?
 
-Yes. MacMonitor is free and open source under the GPL-3.0 license. There are no ads, no accounts and no in-app purchases, and it never connects to the internet.
+Yes. MacMonitor is free and open source under the GPL-3.0 license. There are no ads, no accounts and no in-app purchases, and it collects nothing; its only connection is the daily update check on GitLab, which you can turn off.
 
 ### How do I see CPU and RAM usage in the Mac menu bar?
 
@@ -182,6 +183,10 @@ Open MacMonitor's **Battery** tab. It shows the charge, time remaining, power dr
 ### Does MacMonitor keep a battery history when the panel is closed?
 
 Yes. It records the battery once a minute while it runs and keeps 90 days, about 1 MB, in `~/Library/Application Support/MacMonitor` on your Mac. Nothing is sent anywhere. The Battery tab only appears on Macs with a battery.
+
+### Does MacMonitor update itself?
+
+Yes, from version 1.3.0. Once a day it looks for a new release on GitLab and shows what's new. If you choose **Update Now**, it downloads the update, checks its SHA-256 and signature, replaces itself and restarts, and your battery history is kept. No password is needed. You can skip a version, or turn the check off in Settings.
 
 ### Will it slow down my Mac?
 

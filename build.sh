@@ -1,12 +1,13 @@
 #!/bin/bash
 # MacMonitor.app'i derler (Apple Silicon + Intel, universal).
-#   --zip  ayrıca build/release/MacMonitor-<sürüm>.zip ve SHA-256 değerini üretir
+#   --zip  ayrıca build/release/MacMonitor.zip ve MacMonitor.zip.sha256 üretir (güncelleyici bu sabit adları arar)
+#   EXTRA_SWIFT_FLAGS="-D DEBUG"  güncelleyicinin deneme ayarlarını açar; yayım derlemesinde kullanılmaz
 set -e
 cd "$(dirname "$0")"
 
 APP_NAME="MacMonitor"
-VERSION="1.2.1"
-BUILD_NUMBER="7"
+VERSION="1.3.0"
+BUILD_NUMBER="8"
 BUILD_DIR="build"
 APP_BUNDLE="${BUILD_DIR}/${APP_NAME}.app"
 CONTENTS_DIR="${APP_BUNDLE}/Contents"
@@ -22,7 +23,7 @@ SWIFT_FILES=$(find Sources -name "*.swift")
 
 echo "📦 Kaynak dosyalar derleniyor (arm64 + x86_64)..."
 for ARCH in arm64 x86_64; do
-    swiftc -O \
+    swiftc -O ${EXTRA_SWIFT_FLAGS:-} \
         -parse-as-library \
         -module-cache-path "${CACHE_DIR}" \
         -target ${ARCH}-apple-macos13.0 \
@@ -49,14 +50,14 @@ echo "✅ Derleme tamamlandı: ${APP_BUNDLE}"
 if [[ "${1:-}" == "--zip" ]]; then
     # Zip, uygulamayı ve GPL lisans metnini içeren bir klasör taşır.
     mkdir -p "${BUILD_DIR}/release"
-    ZIP="${BUILD_DIR}/release/${APP_NAME}-${VERSION}.zip"
-    STAGE="${BUILD_DIR}/release/${APP_NAME}-${VERSION}"
-    rm -rf "${ZIP}" "${ZIP}.sha256" "${STAGE}"
+    ZIP="${BUILD_DIR}/release/${APP_NAME}.zip"
+    STAGE="${BUILD_DIR}/release/zip-stage/${APP_NAME}"
+    rm -rf "${ZIP}" "${ZIP}.sha256" "$(dirname "${STAGE}")"
     mkdir -p "${STAGE}"
     cp -R "${APP_BUNDLE}" "${STAGE}/"
     cp LICENSE "${STAGE}/LICENSE.txt"
     ditto -c -k --norsrc --keepParent "${STAGE}" "${ZIP}"
-    rm -rf "${STAGE}"
+    rm -rf "$(dirname "${STAGE}")"
     (cd "${BUILD_DIR}/release" && shasum -a 256 "$(basename "${ZIP}")" > "$(basename "${ZIP}").sha256")
     echo "📦 Paket: ${ZIP}"
 fi

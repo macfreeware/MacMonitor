@@ -109,6 +109,13 @@ public final class AppSettings: ObservableObject {
         }
     }
     
+    /// Once a day MacMonitor asks GitLab whether a newer release exists
+    @Published public var autoCheckUpdates: Bool {
+        didSet {
+            defaults.set(autoCheckUpdates, forKey: "autoCheckUpdates")
+        }
+    }
+    
     /// Shows the real login item registration (SMAppService), not a stored preference.
     @Published public var launchAtLogin: Bool {
         didSet {
@@ -174,6 +181,12 @@ public final class AppSettings: ObservableObject {
             self.showSparkline = defaults.bool(forKey: "showSparkline")
         } else {
             self.showSparkline = true
+        }
+        
+        if defaults.object(forKey: "autoCheckUpdates") != nil {
+            self.autoCheckUpdates = defaults.bool(forKey: "autoCheckUpdates")
+        } else {
+            self.autoCheckUpdates = true
         }
         
         // On by default, applied once; not from a translocated (quarantined, unmoved) copy

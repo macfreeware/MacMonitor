@@ -23,7 +23,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
         setupPopover()
         setupStatusItem()
         observeUpdates()
+        #if !DEBUG  // A test copy must not add samples to the real history file
         BatteryHistory.shared.start()
+        #endif
+        UpdateController.shared.start()
     }
 
     public func applicationWillTerminate(_ notification: Notification) {
@@ -345,6 +348,15 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
         aboutItem.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil)
         menu.addItem(aboutItem)
         
+        let updateItem = NSMenuItem(
+            title: settings.t("Güncellemeleri Denetle...", "Check for Updates..."),
+            action: #selector(menuCheckForUpdates),
+            keyEquivalent: ""
+        )
+        updateItem.target = self
+        updateItem.image = NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: nil)
+        menu.addItem(updateItem)
+        
         menu.addItem(NSMenuItem.separator())
         
         let refreshItem = NSMenuItem(
@@ -401,6 +413,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             AboutWindowManager.shared.show()
         }
+    }
+    
+    @objc private func menuCheckForUpdates() {
+        UpdateController.shared.checkFromMenu()
     }
     
     @objc private func menuQuit() {

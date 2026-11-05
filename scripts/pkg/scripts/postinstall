@@ -22,6 +22,12 @@ if [ -z "$CONSOLE_USER" ] || [ "$CONSOLE_USER" = "root" ] || [ "$CONSOLE_USER" =
 fi
 
 USER_ID="$(/usr/bin/id -u "$CONSOLE_USER")"
+
+# Paket uygulamayı root'a ait kurar. Kullanıcıya devredilmezse uygulama sonraki sürümlere
+# kendini güncelleyemez (sürükleyerek kurulan uygulamalarda da sahip kullanıcıdır).
+/usr/sbin/chown -R "$CONSOLE_USER" "$APP" >> "$LOG" 2>&1
+log "Uygulama '${CONSOLE_USER}' kullanıcısına devredildi (çıkış kodu $?)"
+
 if [ "$(/usr/bin/id -u)" = "0" ]; then
   /bin/launchctl asuser "$USER_ID" /usr/bin/sudo -u "$CONSOLE_USER" /usr/bin/open -a "$APP" >> "$LOG" 2>&1
 else

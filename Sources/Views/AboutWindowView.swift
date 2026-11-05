@@ -74,6 +74,8 @@ public final class AboutWindowManager: NSObject, NSWindowDelegate {
 public struct AboutWindowView: View {
     @ObservedObject private var settings: AppSettings = AppSettings.shared
     public var onClose: () -> Void
+    @State private var isCheckingUpdates = false
+    @State private var updateResult = ""
     
     private var osVersionString: String {
         let v = ProcessInfo.processInfo.operatingSystemVersion
@@ -116,6 +118,24 @@ public struct AboutWindowView: View {
                                     .stroke(Color.cyan.opacity(0.35), lineWidth: 1)
                             )
                             .cornerRadius(8)
+                    }
+                    
+                    // The result line keeps its height so the window does not need resizing
+                    VStack(spacing: 3) {
+                        Button(action: checkForUpdates) {
+                            Text(settings.t("Güncellemeleri Denetle…", "Check for Updates…"))
+                                .font(.system(size: 11))
+                        }
+                        .controlSize(.small)
+                        .disabled(isCheckingUpdates)
+                        
+                        Text(isCheckingUpdates ? settings.t("Denetleniyor…", "Checking…") : updateResult)
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .help(updateResult)
+                            .frame(height: 13)
                     }
                     
                     Text(settings.t(
@@ -352,6 +372,25 @@ public struct AboutWindowView: View {
         .frame(width: 420)
         .fixedSize(horizontal: false, vertical: true)
         .background(Color(NSColor.windowBackgroundColor))
+    }
+    
+    private func checkForUpdates() {
+        isCheckingUpdates = true
+        updateResult = ""
+        Task {
+            let outcome = await UpdateController.shared.checkNow()
+            isCheckingUpdates = false
+            switch outcome {
+            case .newer(let release):
+                // The About window floats and would cover the question
+                onClose()
+                UpdateController.shared.offer(release)
+            case .upToDate(let version):
+                updateResult = settings.t("Güncel: \(version) en son sürüm.", "Up to date: \(version) is the latest.")
+            case .failed(let reason):
+                updateResult = settings.t("Denetlenemedi: \(reason)", "Could not check: \(reason)")
+            }
+        }
     }
     
     private func hardwareRow(icon: String, label: String, value: String) -> some View {

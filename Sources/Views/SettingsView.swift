@@ -141,6 +141,14 @@ public struct SettingsView: View {
                             .font(.system(size: 11))
                     }
                     .toggleStyle(SwitchToggleStyle())
+                    
+                    Toggle(isOn: $settings.autoCheckUpdates) {
+                        Text(settings.t("Güncellemeleri otomatik denetle", "Check for updates automatically"))
+                            .font(.system(size: 11))
+                    }
+                    .toggleStyle(SwitchToggleStyle())
+                    .help(settings.t("Günde bir kez GitLab'daki son sürüme bakar; bu Mac hakkında bilgi göndermez.",
+                                     "Looks at the latest release on GitLab once a day; sends nothing about this Mac."))
                 }
             }
             

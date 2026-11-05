@@ -105,6 +105,7 @@ Yalnızca pilli Mac'lerde görünür.
 - Yenileme sıklığı, menü çubuğu görünümü, uyarı eşikleri ve kırmızı vurgu, geçmiş grafiklerini açma/kapama.
 - **Türkçe, İngilizce ya da sistem dili**, yeniden başlatmadan değişir.
 - macOS `ServiceManagement` (`SMAppService`) ile **Mac açılışında otomatik başlatma**, varsayılan olarak açık.
+- **Güncellemeler:** MacMonitor günde bir kez GitLab'da yeni sürüm olup olmadığına bakar ve kurmadan önce sorar (kapatılabilir). **Güncellemeleri Denetle…** Hakkında penceresinde ve sağ tık menüsünde bulunur.
 
 ## İndirme ve kurulum
 
@@ -115,7 +116,7 @@ Paket Apple Silicon ve Intel Mac'lerde çalışır; macOS 13 veya üstü gerekir
 3. Kurulum adımlarını tamamlayın. MacMonitor **Uygulamalar** klasörüne kurulur, kendiliğinden açılır ve göstergesi menü çubuğunda belirir.
 4. Bundan sonra MacMonitor Mac her açıldığında kendiliğinden başlar. Bunu Ayarlar'dan (*Mac açılışında otomatik başlat*) kapatabilirsiniz.
 
-Kurulum paketi istemiyor musunuz? Her sürümde bir `MacMonitor-<sürüm>.zip` de vardır: açın ve `MacMonitor.app`'i **Uygulamalar** klasörüne sürükleyin.
+Kurulum paketi istemiyor musunuz? Her sürümde bir `MacMonitor.zip` de vardır: açın ve `MacMonitor.app`'i **Uygulamalar** klasörüne sürükleyin.
 
 ### İlk açılış: kurulum paketine bir kez izin verin
 
@@ -148,7 +149,7 @@ Menü çubuğu göstergesine sağ tıklayıp **MacMonitor'dan Çık**'ı seçin,
 
 ## Gizlilik
 
-MacMonitor ağa bağlanmaz ve hiçbir yere veri göndermez. Yönetici yetkisi ya da ek izin gerektirmez. Pil geçmişi (şarj düzeyi, şarj durumu ve sistem gücü; dakikada 8 bayt) Mac'inizde, `~/Library/Application Support/MacMonitor/battery-history.bin` dosyasında kalır; silmek için bu dosyayı silin.
+MacMonitor hiçbir yere veri göndermez. Tek ağ bağlantısı güncelleme denetimidir: günde bir kez gitlab.com'a son sürümü sorar, güncellemeyi yalnızca siz onaylarsanız indirir. Ayarlar'dan *Güncellemeleri otomatik denetle*'yi kapatırsanız yalnızca **Güncellemeleri Denetle…** düğmesine bastığınızda bağlanır. Yönetici yetkisi ya da ek izin gerektirmez. Pil geçmişi (şarj düzeyi, şarj durumu ve sistem gücü; dakikada 8 bayt) Mac'inizde, `~/Library/Application Support/MacMonitor/battery-history.bin` dosyasında kalır; silmek için bu dosyayı silin.
 
 ## Kaynak koddan derleme
 
@@ -156,7 +157,7 @@ Xcode komut satırı araçları gerekir (macOS 13 veya üstü).
 
 ```bash
 ./build.sh              # build/MacMonitor.app'i derler (universal: arm64 + x86_64)
-./build.sh --zip        # ayrıca build/release/MacMonitor-<sürüm>.zip ve SHA-256 değeri
+./build.sh --zip        # ayrıca build/release/MacMonitor.zip ve SHA-256 değeri
 scripts/build_pkg.sh    # kurulum paketi: build/release/MacMonitor-<sürüm>.pkg ve SHA-256 değeri
 ./install.sh            # derler, Uygulamalar'a kopyalar ve başlatır
 ```
@@ -165,7 +166,7 @@ scripts/build_pkg.sh    # kurulum paketi: build/release/MacMonitor-<sürüm>.pkg
 
 ### MacMonitor ücretsiz mi?
 
-Evet. MacMonitor, GPL-3.0 lisansıyla ücretsiz ve açık kaynaktır. Reklam, hesap ya da uygulama içi satın alma yoktur ve internete hiç bağlanmaz.
+Evet. MacMonitor, GPL-3.0 lisansıyla ücretsiz ve açık kaynaktır. Reklam, hesap ya da uygulama içi satın alma yoktur, hiçbir veri toplamaz; tek bağlantısı GitLab'daki günlük güncelleme denetimidir ve kapatılabilir.
 
 ### Mac'te menü çubuğunda CPU ve RAM kullanımını nasıl görürüm?
 
@@ -182,6 +183,10 @@ MacMonitor'ın **Pil** sekmesini açın. Şarj yüzdesini, kalan süreyi, güç 
 ### Panel kapalıyken de pil geçmişi kaydediliyor mu?
 
 Evet. MacMonitor çalıştığı sürece pili dakikada bir kaydeder ve 90 günü (yaklaşık 1 MB) Mac'inizde, `~/Library/Application Support/MacMonitor` içinde tutar. Hiçbir yere gönderilmez. Pil sekmesi yalnızca pilli Mac'lerde görünür.
+
+### MacMonitor kendini günceller mi?
+
+Evet, 1.3.0 sürümünden itibaren. Günde bir kez GitLab'da yeni sürüme bakar ve yenilikleri gösterir. **Şimdi Güncelle**'yi seçerseniz güncellemeyi indirir, SHA-256 değerini ve imzasını denetler, kendini değiştirip yeniden başlar; pil geçmişiniz korunur. Parola gerekmez. Bir sürümü atlayabilir ya da denetimi Ayarlar'dan kapatabilirsiniz.
 
 ### Mac'imi yavaşlatır mı?
 
