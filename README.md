@@ -5,12 +5,12 @@
 <h1 align="center">MacMonitor</h1>
 
 <p align="center">
-  A free, open-source <b>menu bar monitor</b> for macOS: live <b>CPU</b> and <b>RAM</b> usage in the menu bar, with per-core load, memory breakdown, top processes, free disk space and battery health and history one click away.<br>
+  A free, open-source <b>menu bar monitor</b> for macOS: live <b>CPU</b>, <b>RAM</b> and <b>network speed</b> in the menu bar, with per-core load, memory breakdown, top processes, network speed and usage history, free disk space and battery health and history one click away.<br>
   Written in Swift with AppKit and SwiftUI; no Electron and no third-party libraries.
 </p>
 
 <p align="center">
-  A lightweight, free alternative to <b>iStat Menus</b>, <b>Stats</b> and <b>MenuMeters</b> when you only need CPU, memory, disk and battery at a glance.
+  A lightweight, free alternative to <b>iStat Menus</b>, <b>Stats</b> and <b>MenuMeters</b> when you only need CPU, memory, network, disk and battery at a glance.
 </p>
 
 <p align="center">
@@ -36,9 +36,9 @@
 
 ## Screenshots
 
-The readout in light and dark menu bars (red once a threshold is crossed), and the panel that opens with a click.
+The readout in light and dark menu bars (red once a threshold is crossed), the panel that opens with a click, and the history windows.
 
-<p align="center"><img src="docs/screenshots/menubar.png" width="436" alt="Menu bar: CPU 7% and RAM 64% in a light menu bar, CPU 23% and RAM 92% in red in a dark menu bar"></p>
+<p align="center"><img src="docs/screenshots/menubar.png" width="436" alt="Menu bar: CPU, RAM and download and upload speed in a light menu bar, and in a dark menu bar with RAM in red"></p>
 
 <p align="center">
   <img src="docs/screenshots/overview.png" width="330" alt="Overview tab: total CPU with user, system and idle, a bar per core, CPU history, and memory breakdown with swap">
@@ -53,18 +53,30 @@ The readout in light and dark menu bars (red once a threshold is crossed), and t
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/battery.png" width="330" alt="Battery tab: charge, battery history chart with charging periods and system power, health and cycle count">
+  <img src="docs/screenshots/network.png" width="330" alt="Network tab: live download and upload speed, usage for today, yesterday, this week, this month and last month, and a usage chart">
+  &nbsp;
+  <img src="docs/screenshots/battery.png" width="330" alt="Battery tab: charge, history chart colored by charging, plugged-in and on-battery time, screen-on strip, system power, health and cycle count">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/battery-history.png" width="680" alt="Battery History window: large charge chart, system power, time spent in each state and a list of charging sessions">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/network-history.png" width="680" alt="Network History window: large usage chart and the download and upload figures for each period">
 </p>
 
 ## Features
 
 ### Menu bar
 
-- **Live CPU and RAM percentages**, refreshed every 0.5 to 5 seconds.
-- **Five styles:** symbols (`cpu 12%  ram 48%`), text (`CPU 12%  RAM 48%`), minimal (`12% · 48%`), CPU only or RAM only.
+- **Live CPU and RAM percentages and network speed**, refreshed every 0.5 to 5 seconds.
+- **Choose what shows:** CPU, RAM and network speed can each be turned on or off.
+- **Three styles:** symbols, text (`CPU 12%  RAM 48%`) or minimal (`12% · 48%`).
+- **Network speed** in two small lines, download in blue over upload in orange, in MB/s or Mbit/s.
 - **Alerts:** the value turns red when CPU or RAM crosses your threshold (20% to 95%; 85% for CPU and 90% for RAM by default).
-- **Right-click menu:** refresh now, open Activity Monitor, quit.
-- No Dock icon: MacMonitor lives only in the menu bar.
+- **Right-click menu:** history windows, check for updates, refresh now, open Activity Monitor, quit.
+- No Dock icon: MacMonitor lives in the menu bar, and shows in the Dock only while a history window is open.
 
 ### Overview
 
@@ -84,6 +96,13 @@ The readout in light and dark menu bars (red once a threshold is crossed), and t
 - Sizes as Finder shows them (decimal GB, purgeable space counted as free). The bar turns orange above 75% and red above 90%.
 - Double-click a volume to open it in Finder.
 
+### Network
+
+- **Download and upload speed** right now, with a 60-second graph and its peak.
+- **Usage:** data downloaded and uploaded today, yesterday, this week, this month and last month.
+- **Usage chart** by minute, hour, day or month, over the last hour, 24 hours, 7 days, 30 days or 12 months. MacMonitor records once a minute, also with the panel closed, and keeps 400 days.
+- Counts Wi-Fi, Ethernet and USB connections while MacMonitor runs; VPN traffic is not counted twice.
+
 ### Battery
 
 Shown only on Macs with a battery.
@@ -92,17 +111,21 @@ Shown only on Macs with a battery.
 - **Time remaining** until empty or full, as macOS estimates it.
 - **Power:** what the whole Mac draws right now, in watts, and the power going into or out of the battery.
 - **Health and cycles:** maximum capacity (the same figure as System Settings) and cycle count against the battery's design cycles.
-- **Battery history:** a chart of the charge level, with charging periods and system power below it, over the last hour, 24 hours, 7 days, 30 days or everything recorded, with values under the pointer and a summary (time on battery, lowest level, average power). MacMonitor records once a minute, also with the panel closed, and keeps 90 days; macOS itself shows only the last 24 hours.
+- **Battery history:** a chart of the charge level colored by what the Mac was doing (charging, plugged in, on battery), with strips for the state and for when the screen was on, and system power below it, over the last hour, 24 hours, 7 days, 30 days or everything recorded. MacMonitor records once a minute, also with the panel closed, and keeps 90 days; macOS itself shows only the last 24 hours.
+
+### History windows
+
+**Details** on the Battery and Network tabs opens a separate, resizable window with larger charts. Move back and forward in time, or drag on a chart to zoom in. The Battery window lists every charging session and the time spent on battery, charging and with the screen on; click a session to see it on the chart. The Network window lists the figures for every period.
 
 ### Light on resources
 
 - About **0.1% of total CPU and 40 MB of memory** with the panel closed.
-- Reads everything through Darwin and Mach APIs (`host_statistics64`, `host_processor_info`, `proc_pidinfo`, `sysctl`): no `top` or `ps` shell commands, so nothing fills up the system log.
-- Processes are scanned only while the panel is open, and disks are read only while the Disk tab is open. The battery history takes one reading a minute and writes to disk every 10 minutes.
+- Reads everything through Darwin and Mach APIs (`host_statistics64`, `host_processor_info`, `proc_pidinfo`, `sysctl`): no `top` or `ps` shell commands, so nothing fills up the system log. The one exception runs once: `pmset -g log`, to fill in screen-on times for the existing battery history.
+- Processes are scanned only while the panel is open, and disks are read only while the Disk tab is open. The battery and network histories record once a minute and write to disk every 10 minutes.
 
 ### Settings
 
-- Refresh rate, menu bar style, alert thresholds and red highlighting, history graphs on or off.
+- Refresh rate, what the menu bar shows and its style, speed in MB/s or Mbit/s, alert thresholds and red highlighting, history graphs on or off.
 - **English, Turkish or the system language**, switched without restarting.
 - **Launch at login** through macOS `ServiceManagement` (`SMAppService`), on by default.
 - **Updates:** once a day MacMonitor checks GitLab for a new release and asks before installing it (you can turn this off). **Check for Updates…** is in the About window and the right-click menu.
@@ -149,7 +172,7 @@ Right-click the menu bar readout, choose **Quit MacMonitor**, then move MacMonit
 
 ## Privacy
 
-MacMonitor sends no data anywhere. Its only network connection is the update check: once a day it asks gitlab.com for the latest release, and downloads an update only when you approve it. Turn off *Check for updates automatically* in Settings and it connects only when you press **Check for Updates…**. It needs no administrator rights and no extra permissions. The battery history (charge level, charging state and system power, 8 bytes a minute) stays on your Mac in `~/Library/Application Support/MacMonitor/battery-history.bin`; delete that file to clear it.
+MacMonitor sends no data anywhere. Its only network connection is the update check: once a day it asks gitlab.com for the latest release, and downloads an update only when you approve it. Turn off *Check for updates automatically* in Settings and it connects only when you press **Check for Updates…**. It needs no administrator rights and no extra permissions. The battery history (charge level, charging state, screen on or off and system power, 8 bytes a minute) and the network history (amount of data per minute, not what was sent or where) stay on your Mac in `~/Library/Application Support/MacMonitor/`, as `battery-history.bin` and `network-history.bin`; delete a file to clear it.
 
 ## Building from source
 
@@ -184,6 +207,14 @@ Open MacMonitor's **Battery** tab. It shows the charge, time remaining, power dr
 
 Yes. It records the battery once a minute while it runs and keeps 90 days, about 1 MB, in `~/Library/Application Support/MacMonitor` on your Mac. Nothing is sent anywhere. The Battery tab only appears on Macs with a battery.
 
+### How do I see network speed in the Mac menu bar?
+
+MacMonitor shows download and upload speed in two small lines next to CPU and RAM, in MB/s or Mbit/s. The **Network** tab adds usage for today, yesterday, this week, this month and last month, with charts by minute, hour, day or month, kept for 400 days.
+
+### How do I see when my Mac was charging, and how long the screen was on?
+
+Open **Details** in MacMonitor's **Battery** tab. The chart colors charging, plugged-in and on-battery time, with a strip for when the screen was on, and lists every charging session with its start, length and charge gained.
+
 ### Does MacMonitor update itself?
 
 Yes, from version 1.3.0. Once a day it looks for a new release on GitLab and shows what's new. If you choose **Update Now**, it downloads the update, checks its SHA-256 and signature, replaces itself and restarts, and your battery history is kept. No password is needed. You can skip a version, or turn the check off in Settings.
@@ -194,7 +225,7 @@ No. With the panel closed MacMonitor uses about 0.1% of total CPU and 40 MB of m
 
 ### How is it different from iStat Menus or Stats?
 
-MacMonitor does less on purpose: CPU, memory, disk space, the battery and the top processes. It has no sensor, network or GPU graphs. If those essentials are all you want, it stays small and quiet.
+MacMonitor does less on purpose: CPU, memory, network speed, disk space, the battery and the top processes. It has no sensor or GPU graphs. If those essentials are all you want, it stays small and quiet.
 
 ### Which Macs does it run on?
 

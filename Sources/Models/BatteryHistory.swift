@@ -8,6 +8,8 @@ public struct BatterySample: Equatable {
     public var isCharging: Bool
     /// Whole-system power in watts, when the Mac reports it
     public var watts: Double?
+    /// Whether the display was on; nil in records older than this field
+    public var screenOn: Bool? = nil
 }
 
 /// Records the battery once a minute, also while the panel is closed, and keeps 90 days
@@ -17,13 +19,12 @@ public struct BatterySample: Equatable {
 public final class BatteryHistory {
     public static let shared = BatteryHistory()
 
-    public static let interval: TimeInterval = 60
+    public nonisolated static let interval: TimeInterval = 60
     public static let keepDays: Double = 90
 
     private var timer: Timer?
     private var pending: [BatterySample] = []
     private var observers: [NSObjectProtocol] = []
-    private var termSource: DispatchSourceSignal?
 
     private static let recordSize = 8
 
@@ -38,6 +39,7 @@ public final class BatteryHistory {
     public func start() {
         guard timer == nil, BatteryInfo.isPresent else { return }
         prune()
+        importScreenHistoryOnce()
         record()
         let t = Timer(timeInterval: Self.interval, repeats: true) { _ in
             MainActor.assumeIsolated { BatteryHistory.shared.record() }
@@ -53,22 +55,13 @@ public final class BatteryHistory {
         observers.append(ws.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { BatteryHistory.shared.record() }
         })
-
-        // The installer stops a running copy with SIGTERM, which skips applicationWillTerminate
-        signal(SIGTERM, SIG_IGN)
-        let term = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
-        term.setEventHandler {
-            MainActor.assumeIsolated { BatteryHistory.shared.flush() }
-            exit(0)
-        }
-        term.resume()
-        termSource = term
     }
 
     public func record() {
         guard let b = BatteryInfo.read() else { return }
         pending.append(BatterySample(time: Date(), percent: b.percent, isOnAC: b.isOnAC,
-                                     isCharging: b.state == .charging, watts: b.systemWatts))
+                                     isCharging: b.state == .charging, watts: b.systemWatts,
+                                     screenOn: CGDisplayIsAsleep(CGMainDisplayID()) == 0))
         // Write in batches to spare the disk; sleep and quit flush the rest
         if pending.count >= 10 { flush() }
     }
@@ -111,14 +104,65 @@ public final class BatteryHistory {
         try? kept.write(to: fileURL, options: .atomic)
     }
 
+    /// Records from before the screen state was saved get it from macOS's power log, once.
+    /// `pmset -g log` keeps about a week and takes seconds of CPU, so it is not run again.
+    private func importScreenHistoryOnce() {
+        guard !UserDefaults.standard.bool(forKey: "screenHistoryImported") else { return }
+        Task.detached(priority: .utility) {
+            let events = Self.readDisplayEvents()
+            await MainActor.run { BatteryHistory.shared.applyScreenEvents(events) }
+        }
+    }
+
+    /// Display on/off changes from macOS's power log, oldest first
+    nonisolated static func readDisplayEvents() -> [(time: Date, isOn: Bool)] {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
+        process.arguments = ["-g", "log"]
+        let output = Pipe()
+        process.standardOutput = output
+        process.standardError = FileHandle.nullDevice
+        guard (try? process.run()) != nil else { return [] }
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss Z"
+        var events: [(time: Date, isOn: Bool)] = []
+        for line in String(decoding: data, as: UTF8.self).split(separator: "\n") where line.contains("Display is turned") {
+            guard let time = formatter.date(from: String(line.prefix(25))) else { continue }
+            events.append((time, line.contains("turned on")))
+        }
+        return events
+    }
+
+    func applyScreenEvents(_ events: [(time: Date, isOn: Bool)]) {
+        guard !events.isEmpty else { return }
+        UserDefaults.standard.set(true, forKey: "screenHistoryImported")
+        guard let data = try? Data(contentsOf: fileURL) else { return }
+        var samples = Self.decode(data)
+        var index = -1
+        for i in samples.indices where samples[i].screenOn == nil {
+            while index + 1 < events.count && events[index + 1].time <= samples[i].time { index += 1 }
+            if index >= 0 { samples[i].screenOn = events[index].isOn }
+        }
+        var updated = Data(capacity: samples.count * Self.recordSize)
+        for s in samples { Self.encode(s, into: &updated) }
+        try? updated.write(to: fileURL, options: .atomic)
+    }
+
     // MARK: - File format: 8 bytes per sample, little endian
-    // UInt32 Unix time · UInt8 percent · UInt8 flags (1 on AC, 2 charging, 4 has watts) · UInt16 watts × 10
+    // UInt32 Unix time · UInt8 percent · UInt8 flags · UInt16 watts × 10
+    // Flags: 1 on AC, 2 charging, 4 has watts, 8 has screen state, 16 screen on
+    // Older versions ignore the screen bits, so the format stays compatible both ways.
 
     private static func encode(_ s: BatterySample, into data: inout Data) {
         var time = UInt32(clamping: Int(s.time.timeIntervalSince1970)).littleEndian
         var flags: UInt8 = 0
         if s.isOnAC { flags |= 1 }
         if s.isCharging { flags |= 2 }
+        if let on = s.screenOn { flags |= on ? 24 : 8 }
         var watts: UInt16 = 0
         if let w = s.watts {
             flags |= 4
@@ -144,7 +188,8 @@ public final class BatteryHistory {
                 let watts = UInt16(littleEndian: raw.loadUnaligned(fromByteOffset: o + 6, as: UInt16.self))
                 out.append(BatterySample(time: Date(timeIntervalSince1970: TimeInterval(time)), percent: percent,
                                          isOnAC: flags & 1 != 0, isCharging: flags & 2 != 0,
-                                         watts: flags & 4 != 0 ? Double(watts) / 10 : nil))
+                                         watts: flags & 4 != 0 ? Double(watts) / 10 : nil,
+                                         screenOn: flags & 8 != 0 ? flags & 16 != 0 : nil))
             }
         }
         return out

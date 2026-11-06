@@ -85,9 +85,10 @@ public struct PopoverContentView: View {
             // A segmented Picker sizes every segment to the widest label and, with four tabs,
             // grows past the popover width; this bar always splits the available width evenly
             PopoverTabBar(selection: $settings.activeTab, tabs: [
-                (0, settings.t("Genel Bakış", "Overview")),
+                (0, settings.t("Genel", "Overview")),
                 (1, settings.t("İşlemler", "Processes")),
                 (3, settings.t("Disk", "Disk")),
+                (5, settings.t("Ağ", "Network")),
             ] + (BatteryInfo.isPresent ? [(4, settings.t("Pil", "Battery"))] : []) + [
                 (2, settings.t("Ayarlar", "Settings")),
             ])
@@ -111,6 +112,10 @@ public struct PopoverContentView: View {
             } else if settings.activeTab == 3 {
                 // Disk space
                 DiskView(settings: settings)
+                    .padding(14)
+            } else if settings.activeTab == 5 {
+                // Network speed and usage
+                NetworkView(monitor: monitor, settings: settings)
                     .padding(14)
             } else if settings.activeTab == 4 && BatteryInfo.isPresent {
                 // Battery (only on Macs that have one)

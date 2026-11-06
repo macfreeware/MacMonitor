@@ -12,6 +12,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
     private var localEventMonitor: Any?
     private var popoverOpenTime = Date.distantPast
     private var lastStatusSignature = ""
+    private var termSource: DispatchSourceSignal?
     
     private let monitor = SystemMonitor.shared
     private let settings = AppSettings.shared
@@ -23,14 +24,34 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
         setupPopover()
         setupStatusItem()
         observeUpdates()
-        #if !DEBUG  // A test copy must not add samples to the real history file
+        #if !DEBUG  // A test copy must not add samples to the real history files
         BatteryHistory.shared.start()
+        NetworkHistory.shared.start()
         #endif
+        saveHistoriesOnSIGTERM()
         UpdateController.shared.start()
     }
 
     public func applicationWillTerminate(_ notification: Notification) {
+        flushHistories()
+    }
+    
+    private func flushHistories() {
         BatteryHistory.shared.flush()
+        NetworkHistory.shared.record()
+        NetworkHistory.shared.flush()
+    }
+    
+    /// The installer stops a running copy with SIGTERM, which skips applicationWillTerminate
+    private func saveHistoriesOnSIGTERM() {
+        signal(SIGTERM, SIG_IGN)
+        let term = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        term.setEventHandler { [weak self] in
+            MainActor.assumeIsolated { self?.flushHistories() }
+            exit(0)
+        }
+        term.resume()
+        termSource = term
     }
     
     private func setupPopover() {
@@ -109,6 +130,15 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
             }
             .store(in: &cancellables)
             
+        Publishers.MergeMany(settings.$showCPUInMenuBar, settings.$showRAMInMenuBar,
+                             settings.$showNetworkInMenuBar, settings.$showSpeedInBits)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updateStatusItemLength()
+                self?.updateButtonDisplay()
+            }
+            .store(in: &cancellables)
+            
         // Observe metric changes
         Publishers.CombineLatest3(
             monitor.$menuBarText,
@@ -144,7 +174,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
     
     /// Fixed width for the widest content ("100%") so the item never jumps as values change
     private func updateStatusItemLength() {
-        let widest = makeStatusItemAttributedTitle(cpuVal: 100, ramVal: 100, isCpuAlert: false, isRamAlert: false)
+        // M is the widest unit letter
+        let widestSpeed = settings.showSpeedInBits ? "000 Mbit/s" : "000 MB/s"
+        let widest = makeStatusItemAttributedTitle(cpuVal: 100, ramVal: 100, isCpuAlert: false, isRamAlert: false,
+                                                   down: widestSpeed, up: widestSpeed)
         statusItem.length = ceil(widest.size().width) + 10
         statusItem.button?.alignment = .center
     }
@@ -152,18 +185,43 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
     private func updateButtonDisplay() {
         guard let button = statusItem.button else { return }
         // Several publishers fire per refresh; redraw only when what is shown actually changes
-        let signature = "\(settings.menuBarStyle.rawValue)|\(Int(round(monitor.cpuInfo.totalUsage)))|\(Int(round(monitor.memoryInfo.usedPercentage)))|\(monitor.isCpuAlert && settings.showColoredAlert)|\(monitor.isRamAlert && settings.showColoredAlert)"
+        let down = settings.formatSpeed(monitor.networkInfo.downBytesPerSecond)
+        let up = settings.formatSpeed(monitor.networkInfo.upBytesPerSecond)
+        let signature = "\(settings.showCPUInMenuBar)|\(settings.showRAMInMenuBar)|\(settings.showNetworkInMenuBar ? down + up : "")|\(settings.menuBarStyle.rawValue)|\(Int(round(monitor.cpuInfo.totalUsage)))|\(Int(round(monitor.memoryInfo.usedPercentage)))|\(monitor.isCpuAlert && settings.showColoredAlert)|\(monitor.isRamAlert && settings.showColoredAlert)"
         guard signature != lastStatusSignature else { return }
         lastStatusSignature = signature
         button.attributedTitle = makeStatusItemAttributedTitle(
             cpuVal: Int(round(monitor.cpuInfo.totalUsage)),
             ramVal: Int(round(monitor.memoryInfo.usedPercentage)),
             isCpuAlert: monitor.isCpuAlert && settings.showColoredAlert,
-            isRamAlert: monitor.isRamAlert && settings.showColoredAlert
+            isRamAlert: monitor.isRamAlert && settings.showColoredAlert,
+            down: down,
+            up: up
         )
     }
     
-    private func makeStatusItemAttributedTitle(cpuVal: Int, ramVal: Int, isCpuAlert: Bool, isRamAlert: Bool) -> NSAttributedString {
+    /// Download over upload in two small lines, so the speeds take little room in the menu bar.
+    /// An image like the CPU and RAM symbols, in the same colors as the Network tab's chart.
+    private func makeNetworkAttachment(down: String, up: String, baseFont: NSFont) -> NSAttributedString {
+        let font = NSFont.monospacedDigitSystemFont(ofSize: 9, weight: .bold)
+        let top = NSAttributedString(string: "↓ \(down)", attributes: [.font: font, .foregroundColor: NetworkColors.downNS])
+        let bottom = NSAttributedString(string: "↑ \(up)", attributes: [.font: font, .foregroundColor: NetworkColors.upNS])
+        // Fixed width, so the CPU and RAM values do not move as speeds change
+        let widest = "↓ 000 \(settings.showSpeedInBits ? "Mbit/s" : "MB/s")"
+        let width = ceil(NSAttributedString(string: widest, attributes: [.font: font]).size().width)
+        let size = NSSize(width: width, height: 21)
+        let img = NSImage(size: size, flipped: false) { _ in
+            top.draw(at: NSPoint(x: 0, y: 10.5))
+            bottom.draw(at: NSPoint(x: 0, y: 0))
+            return true
+        }
+        let attach = NSTextAttachment()
+        attach.image = img
+        attach.bounds = CGRect(x: 0, y: ((baseFont.capHeight - size.height) / 2).rounded(), width: size.width, height: size.height)
+        return NSAttributedString(attachment: attach)
+    }
+    
+    private func makeStatusItemAttributedTitle(cpuVal: Int, ramVal: Int, isCpuAlert: Bool, isRamAlert: Bool, down: String, up: String) -> NSAttributedString {
 
         let font = NSFont.monospacedDigitSystemFont(ofSize: 11.5, weight: .medium)
         let normalColor = NSColor.labelColor
@@ -179,6 +237,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
         }
         
         let symbolConfig = NSImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
+        let style = settings.menuBarStyle
         let result = NSMutableAttributedString()
         
         func makeAttachment(systemName: String, isAlert: Bool) -> NSAttributedString {
@@ -199,46 +258,39 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
             return NSAttributedString(attachment: attach)
         }
         
-        switch settings.menuBarStyle {
-        case .icons:
-            // Native CPU hardware icon + %
-            result.append(makeAttachment(systemName: "cpu", isAlert: isCpuAlert))
-            result.append(NSAttributedString(string: " \(formatPercent(cpuVal))  ", attributes: [
-                .font: font,
-                .foregroundColor: isCpuAlert ? alertColor : normalColor
-            ]))
-            // Native RAM memory module icon + %
-            result.append(makeAttachment(systemName: "memorychip", isAlert: isRamAlert))
-            result.append(NSAttributedString(string: " \(formatPercent(ramVal))", attributes: [
-                .font: font,
-                .foregroundColor: isRamAlert ? alertColor : normalColor
-            ]))
-            
-        case .compact:
-            result.append(NSAttributedString(string: "CPU \(formatPercent(cpuVal))  RAM \(formatPercent(ramVal))", attributes: [
-                .font: font,
-                .foregroundColor: (isCpuAlert || isRamAlert) ? alertColor : normalColor
-            ]))
-            
-        case .minimal:
-            result.append(NSAttributedString(string: "\(formatPercent(cpuVal)) · \(formatPercent(ramVal))", attributes: [
-                .font: font,
-                .foregroundColor: (isCpuAlert || isRamAlert) ? alertColor : normalColor
-            ]))
-            
-        case .cpuOnly:
-            result.append(makeAttachment(systemName: "cpu", isAlert: isCpuAlert))
-            result.append(NSAttributedString(string: " \(formatPercent(cpuVal))", attributes: [
-                .font: font,
-                .foregroundColor: isCpuAlert ? alertColor : normalColor
-            ]))
-            
-        case .ramOnly:
-            result.append(makeAttachment(systemName: "memorychip", isAlert: isRamAlert))
-            result.append(NSAttributedString(string: " \(formatPercent(ramVal))", attributes: [
-                .font: font,
-                .foregroundColor: isRamAlert ? alertColor : normalColor
-            ]))
+        func text(_ string: String, isAlert: Bool) -> NSAttributedString {
+            NSAttributedString(string: string, attributes: [.font: font, .foregroundColor: isAlert ? alertColor : normalColor])
+        }
+        
+        func metric(symbol: String, label: String, value: Int, isAlert: Bool) -> NSAttributedString {
+            let item = NSMutableAttributedString()
+            switch style {
+            case .icons:
+                item.append(makeAttachment(systemName: symbol, isAlert: isAlert))
+                item.append(text(" \(formatPercent(value))", isAlert: isAlert))
+            case .compact:
+                item.append(text("\(label) \(formatPercent(value))", isAlert: isAlert))
+            case .minimal:
+                item.append(text(formatPercent(value), isAlert: isAlert))
+            }
+            return item
+        }
+        
+        var metrics: [NSAttributedString] = []
+        if settings.showCPUInMenuBar {
+            metrics.append(metric(symbol: "cpu", label: "CPU", value: cpuVal, isAlert: isCpuAlert))
+        }
+        if settings.showRAMInMenuBar {
+            metrics.append(metric(symbol: "memorychip", label: "RAM", value: ramVal, isAlert: isRamAlert))
+        }
+        for (index, item) in metrics.enumerated() {
+            if index > 0 { result.append(text(style == .minimal ? " · " : "  ", isAlert: false)) }
+            result.append(item)
+        }
+        
+        if settings.showNetworkInMenuBar {
+            if !metrics.isEmpty { result.append(text("  ", isAlert: false)) }
+            result.append(makeNetworkAttachment(down: down, up: up, baseFont: font))
         }
         
         return result
@@ -348,6 +400,30 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
         aboutItem.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil)
         menu.addItem(aboutItem)
         
+        menu.addItem(NSMenuItem.separator())
+        
+        if BatteryInfo.isPresent {
+            let batteryItem = NSMenuItem(
+                title: settings.t("Pil Geçmişi...", "Battery History..."),
+                action: #selector(menuOpenBatteryHistory),
+                keyEquivalent: ""
+            )
+            batteryItem.target = self
+            batteryItem.image = NSImage(systemSymbolName: "battery.75", accessibilityDescription: nil)
+            menu.addItem(batteryItem)
+        }
+        
+        let networkItem = NSMenuItem(
+            title: settings.t("Ağ Geçmişi...", "Network History..."),
+            action: #selector(menuOpenNetworkHistory),
+            keyEquivalent: ""
+        )
+        networkItem.target = self
+        networkItem.image = NSImage(systemSymbolName: "arrow.up.arrow.down", accessibilityDescription: nil)
+        menu.addItem(networkItem)
+        
+        menu.addItem(NSMenuItem.separator())
+        
         let updateItem = NSMenuItem(
             title: settings.t("Güncellemeleri Denetle...", "Check for Updates..."),
             action: #selector(menuCheckForUpdates),
@@ -412,6 +488,18 @@ public final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelega
     @objc private func menuOpenAbout() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             AboutWindowManager.shared.show()
+        }
+    }
+    
+    @objc private func menuOpenBatteryHistory() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            HistoryWindowManager.shared.show(.battery)
+        }
+    }
+    
+    @objc private func menuOpenNetworkHistory() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            HistoryWindowManager.shared.show(.network)
         }
     }
     

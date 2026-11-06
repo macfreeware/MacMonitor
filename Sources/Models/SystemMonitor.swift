@@ -21,6 +21,7 @@ public final class SystemMonitor: ObservableObject {
     
     @Published public private(set) var cpuInfo = CPUInfo()
     @Published public private(set) var memoryInfo = MemoryInfo()
+    @Published public private(set) var networkInfo = NetworkInfo()
     @Published public private(set) var topCPUProcesses: [ProcessItem] = []
     @Published public private(set) var topMemoryProcesses: [ProcessItem] = []
     @Published public private(set) var menuBarText: String = "..."
@@ -46,6 +47,10 @@ public final class SystemMonitor: ObservableObject {
     // CPU delta tracking
     private var previousCPULoads: [CPULoadRaw]?
     private var previousCPUTime: Date?
+    
+    // Network delta tracking
+    private var networkCounters = NetworkCounterReader()
+    private var previousNetworkTime: Date?
     
     // Process delta tracking
     private var prevProcessSnaps: [pid_t: ProcessSnapRaw] = [:]
@@ -126,11 +131,14 @@ public final class SystemMonitor: ObservableObject {
         let length = Self.historyLength(for: interval)
         cpuInfo.history = Array(repeating: 0.0, count: length)
         memoryInfo.history = Array(repeating: memoryInfo.usedPercentage, count: length)
+        networkInfo.downHistory = Array(repeating: 0.0, count: length)
+        networkInfo.upHistory = Array(repeating: 0.0, count: length)
     }
     
     public func refreshMetrics() {
         updateMemory()
         updateCPU()
+        updateNetwork()
         
         if isPopoverOpen {
             updateProcesses()
@@ -279,6 +287,28 @@ public final class SystemMonitor: ObservableObject {
         self.cpuInfo = cpu
     }
     
+    // MARK: - Network Update (Kernel interface counters)
+    private func updateNetwork() {
+        let now = Date()
+        let delta = networkCounters.readDelta()
+        defer { previousNetworkTime = now }
+        NetworkHistory.shared.add(down: delta.down, up: delta.up)
+        guard let previous = previousNetworkTime else { return }
+        let elapsed = now.timeIntervalSince(previous)
+        // The manual refresh button can fire right after a timer tick
+        guard elapsed > 0.1 else { return }
+        
+        var net = self.networkInfo
+        net.downBytesPerSecond = Double(delta.down) / elapsed
+        net.upBytesPerSecond = Double(delta.up) / elapsed
+        let length = Self.historyLength(for: AppSettings.shared.refreshInterval)
+        if net.downHistory.count >= length { net.downHistory.removeFirst(net.downHistory.count - length + 1) }
+        if net.upHistory.count >= length { net.upHistory.removeFirst(net.upHistory.count - length + 1) }
+        net.downHistory.append(net.downBytesPerSecond)
+        net.upHistory.append(net.upBytesPerSecond)
+        self.networkInfo = net
+    }
+    
     // MARK: - Process Update (Only runs while Popover is open)
     private func updateProcesses() {
         let maxPids = 2048
@@ -362,16 +392,10 @@ public final class SystemMonitor: ObservableObject {
         let ramVal = Int(round(memoryInfo.usedPercentage))
         
         switch settings.menuBarStyle {
-        case .icons:
-            self.menuBarText = "CPU \(cpuVal)%  RAM \(ramVal)%"
-        case .compact:
+        case .icons, .compact:
             self.menuBarText = "CPU \(cpuVal)%  RAM \(ramVal)%"
         case .minimal:
             self.menuBarText = "\(cpuVal)% · \(ramVal)%"
-        case .cpuOnly:
-            self.menuBarText = "CPU \(cpuVal)%"
-        case .ramOnly:
-            self.menuBarText = "RAM \(ramVal)%"
         }
     }
 }

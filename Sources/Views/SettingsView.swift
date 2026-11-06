@@ -40,22 +40,30 @@ public struct SettingsView: View {
                 }
             }
             
-            // Section 2: Menü Çubuğu Görünümü
-            settingSection(title: settings.t("MENÜ ÇUBUĞU GÖRÜNÜMÜ", "MENU BAR APPEARANCE")) {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(MenuBarStyle.allCases) { style in
-                        Button(action: {
-                            settings.menuBarStyle = style
-                        }) {
-                            HStack {
-                                Image(systemName: settings.menuBarStyle == style ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(settings.menuBarStyle == style ? .accentColor : .secondary)
-                                Text(style.title(isTurkish: isTR))
-                                    .font(.system(size: 11))
-                                Spacer()
+            // Section 2: Menü Çubuğu
+            settingSection(title: settings.t("MENÜ ÇUBUĞU", "MENU BAR")) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 6) {
+                        menuBarChip("CPU", systemImage: "cpu", isOn: $settings.showCPUInMenuBar)
+                        menuBarChip("RAM", systemImage: "memorychip", isOn: $settings.showRAMInMenuBar)
+                        menuBarChip(settings.t("Ağ Hızı", "Network"), systemImage: "arrow.up.arrow.down", isOn: $settings.showNetworkInMenuBar)
+                    }
+                    
+                    settingRow(settings.t("CPU ve RAM görünümü", "CPU and RAM style"), isEnabled: settings.showCPUInMenuBar || settings.showRAMInMenuBar) {
+                        Picker("", selection: $settings.menuBarStyle) {
+                            ForEach(MenuBarStyle.allCases) { style in
+                                Text(style.title(isTurkish: isTR)).tag(style)
                             }
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .frame(width: 170)
+                    }
+                    
+                    settingRow(settings.t("Hız birimi", "Speed unit"), isEnabled: true) {
+                        Picker("", selection: $settings.showSpeedInBits) {
+                            Text("MB/s").tag(false)
+                            Text("Mbit/s").tag(true)
+                        }
+                        .frame(width: 170)
                     }
                 }
             }
@@ -63,11 +71,7 @@ public struct SettingsView: View {
             // Section 3: Uyarı Eşikleri
             settingSection(title: settings.t("YÜKSEK KULLANIM UYARILARI", "HIGH USAGE ALERTS")) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Toggle(isOn: $settings.showColoredAlert) {
-                        Text(settings.t("Eşik aşıldığında kırmızıyla uyar", "Show in red when a threshold is exceeded"))
-                            .font(.system(size: 11, weight: .medium))
-                    }
-                    .toggleStyle(SwitchToggleStyle())
+                    settingSwitch(settings.t("Eşik aşıldığında kırmızıyla uyar", "Show in red when a threshold is exceeded"), isOn: $settings.showColoredAlert, isProminent: true)
                     
                     // CPU Slider & Aligned Scale
                     VStack(alignment: .leading, spacing: 5) {
@@ -130,23 +134,11 @@ public struct SettingsView: View {
                     
                     Divider().padding(.vertical, 1)
                     
-                    Toggle(isOn: $settings.showSparkline) {
-                        Text(settings.t("Mini geçmiş grafiklerini göster", "Show mini history graphs"))
-                            .font(.system(size: 11))
-                    }
-                    .toggleStyle(SwitchToggleStyle())
+                    settingSwitch(settings.t("Mini geçmiş grafiklerini göster", "Show mini history graphs"), isOn: $settings.showSparkline)
                     
-                    Toggle(isOn: $settings.launchAtLogin) {
-                        Text(settings.t("Mac açılışında otomatik başlat", "Launch automatically at login"))
-                            .font(.system(size: 11))
-                    }
-                    .toggleStyle(SwitchToggleStyle())
+                    settingSwitch(settings.t("Mac açılışında otomatik başlat", "Launch automatically at login"), isOn: $settings.launchAtLogin)
                     
-                    Toggle(isOn: $settings.autoCheckUpdates) {
-                        Text(settings.t("Güncellemeleri otomatik denetle", "Check for updates automatically"))
-                            .font(.system(size: 11))
-                    }
-                    .toggleStyle(SwitchToggleStyle())
+                    settingSwitch(settings.t("Güncellemeleri otomatik denetle", "Check for updates automatically"), isOn: $settings.autoCheckUpdates)
                     .help(settings.t("Günde bir kez GitLab'daki son sürüme bakar; bu Mac hakkında bilgi göndermez.",
                                      "Looks at the latest release on GitLab once a day; sends nothing about this Mac."))
                 }
@@ -312,6 +304,62 @@ public struct SettingsView: View {
         withAnimation(.easeInOut(duration: 0.2)) {
             isConfirmingQuit = false
             canConfirmQuit = false
+        }
+    }
+    
+    /// One thing the menu bar can show. The last one left cannot be turned off,
+    /// otherwise the menu bar item would be empty and there would be nothing to click.
+    private func menuBarChip(_ title: String, systemImage: String, isOn: Binding<Bool>) -> some View {
+        let enabledCount = [settings.showCPUInMenuBar, settings.showRAMInMenuBar, settings.showNetworkInMenuBar].filter { $0 }.count
+        let isLast = isOn.wrappedValue && enabledCount == 1
+        return Button(action: { isOn.wrappedValue.toggle() }) {
+            VStack(spacing: 3) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 13, weight: .medium))
+                Text(title)
+                    .font(.system(size: 10.5, weight: .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .foregroundColor(isOn.wrappedValue ? .accentColor : .secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .background(isOn.wrappedValue ? Color.accentColor.opacity(0.14) : Color.primary.opacity(0.04))
+            .cornerRadius(7)
+            .overlay(
+                RoundedRectangle(cornerRadius: 7)
+                    .stroke(isOn.wrappedValue ? Color.accentColor.opacity(0.55) : Color.primary.opacity(0.08), lineWidth: 1)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(isLast)
+        .help(isLast ? settings.t("Menü çubuğunda en az bir öğe görünmelidir", "The menu bar has to show at least one item") : title)
+    }
+    
+    /// Label on the left, switch on the right edge, so all switches line up
+    private func settingSwitch(_ title: String, isOn: Binding<Bool>, isProminent: Bool = false) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 11, weight: isProminent ? .medium : .regular))
+            Spacer()
+            Toggle("", isOn: isOn)
+                .toggleStyle(.switch)
+                .labelsHidden()
+        }
+    }
+    
+    private func settingRow<Content: View>(_ title: String, isEnabled: Bool, @ViewBuilder content: () -> Content) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 11))
+                .foregroundColor(isEnabled ? .primary : .secondary)
+            Spacer()
+            content()
+                .pickerStyle(.segmented)
+                .controlSize(.small)
+                .labelsHidden()
+                .disabled(!isEnabled)
         }
     }
     
